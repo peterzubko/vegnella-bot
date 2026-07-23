@@ -24,14 +24,12 @@ def scrape_vegnella():
     global WEBSITE_DATA
     
     # Skúsime rôzne možnosti URL adries
-    urls = [
-        "https://vegnella.sk",
-        "https://vegnella.sk/obedy",
-        "https://vegnella.sk/denne-menu",
-        "https://vegnella.sk/menu",
-        "https://vegnella.sk/ponuka",
-        "https://vegnella.sk/raw-torty",
-        "https://vegnella.sk/kontakt"
+urls = [
+        "https://www.vegnella.sk",
+        "https://www.vegnella.sk/obedy.html",
+        "https://www.vegnella.sk/ponuka.html",
+        "https://www.vegnella.sk/raw-torty.html",
+        "https://www.vegnella.sk/kontakt.html"
     ]
     
     combined_text = ""
