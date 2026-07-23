@@ -32,8 +32,10 @@
 </div>
 
 <script>
-    // 🌐 TRVALÁ ADRESA NA RENDER.COM
     const TUNNEL_URL = "https://vegnella-bot.onrender.com/api/chat";
+    
+    // Pole pre uchovanie histórie správ
+    let chatHistory = [];
 
     async function sendMessage() {
         const input = document.getElementById('userInput');
@@ -43,15 +45,24 @@
         appendMessage(text, 'user');
         input.value = '';
 
+        // Pridáme používateľskú správu do histórie
+        chatHistory.push({ role: "user", content: text });
+
         try {
             const response = await fetch(TUNNEL_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ text: text })
+                body: JSON.stringify({ messages: chatHistory })
             });
 
             const data = await response.json();
-            appendMessage(data.odpoved || "Ospravedlňujem sa, nepodarilo sa získať odpoveď.", 'bot');
+            const botReply = data.odpoved || "Ospravedlňujem sa, nepodarilo sa získať odpoveď.";
+            
+            appendMessage(botReply, 'bot');
+            
+            // Pridáme odpoveď bota do histórie
+            chatHistory.push({ role: "assistant", content: botReply });
+
         } catch (error) {
             appendMessage("Chyba spojenia so serverom.", 'bot');
             console.error(error);

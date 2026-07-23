@@ -1,13 +1,13 @@
 import os
+import requests
+from bs4 import BeautifulSoup
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
 
-# 1. Vytvorenie FastAPI aplikácie
-app = FastAPI(title="Vegnella Bot")
+app = FastAPI()
 
-# 2. Nastavenie CORS (povolenie komunikácie s webstránkou)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -16,69 +16,75 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 3. OpenAI Klient
-client = OpenAI()
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-# 4. Denné menu bistra Vegnella
-DENNE_MENU = """
-PONDELOK:
-- Polievka: Hráškový krém s mätou
-- Hlavné jedlo: Vegánske lasagne so špenátom
+# Globálna premenná pre uloženie dát z webu
+WEBSITE_DATA = ""
 
-UTOROK:
-- Polievka: Paradajková s bazalkou
-- Hlavné jedlo: Cícerové curry s ryžou
-
-STREDA:
-- Polievka: Šošovicová kyslá
-- Hlavné jedlo: Vegánsky burger s hranolkami
-
-ŠTVRTOK:
-- Polievka: Hlivová gulašovka
-- Hlavné jedlo: Tofu poke bowl
-
-PIATOK:
-- Polievka: Tekvicový krém
-- Hlavné jedlo: Pad Thai rezance s tofu
-
-Cena menu: 7,90 € | Výdaj od 11:00 do 1:00 alebo do vypredania.
-"""
-
-# 5. System Prompt (inštrukcie a mantinely pre AI)
-SYSTEM_PROMPT = f"""
-Si milý a ochotný asistent pre vegánske bistro Vegnella (vegnella.sk).
-Tvoja JEDINÁ úloha je odpovedať zákazníkom na otázky ohľadom denného menu a bistra.
-
-AKTUÁLNE MENU A INFO O BISTRE:
-{DENNE_MENU}
-
-Otváracie hodiny: Pondelok - Piatok od 08:00 do 17:00.
-
-PRAVIDLÁ:
-1. Odpovedaj stručne, milo a v slovenčine s použitím emodži 🌿.
-2. Ak sa pýtajú na dnešné menu, pozri sa, aký je dnes deň v týždni, a vypíš len menu pre ten konkrétny deň.
-3. Ak sa pýtajú na menu na celý týždeň, vypíš kompletne celý týždeň.
-4. Ak sa pýtajú na akékoľvek iné témy (počasie, politika, vtipy...), zdvorilo ich odmietni:
-   "Ospravedlňujem sa, ale som asistent bistra Vegnella a viem vám pomôcť len s ponukou nášho menu! 🌿"
-"""
-
-class SpravaRequest(BaseModel):
-    text: str
-
-# 6. API Endpoint, ktorý prijíma správu z chatu
-@app.post("/api/chat")
-async def chat_endpoint(data: SpravaRequest):
+def scrape_vegnella():
+    global WEBSITE_DATA
     try:
+        url = "https://vegnella.sk"
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        response = requests.get(url, headers=headers, timeout=10)
+        
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            # Vyčistíme text od skriptov a štýlov
+            for script in soup(["script", "style"]):
+                script.extract()
+            text = soup.get_text(separator=' ', strip=True)
+            WEBSITE_DATA = text[:4000] # Uložíme podstatnú časť textu z webu
+            print("✅ Úspešne stiahnuté dáta z vegnella.sk")
+        else:
+            print(f"⚠️ Nepodarilo sa načítat web, kód: {response.status_code}")
+    except Exception as e:
+        print(f"❌ Chyba pri sťahovaní webu: {e}")
+
+# Načítame dáta hneď pri spustení
+scrape_vegnella()
+
+class ChatRequest(BaseModel):
+    messages: list
+
+@app.get("/")
+def home():
+    return {"status": "Vegnella AI Bot running"}
+
+@app.get("/api/refresh")
+def refresh_data():
+    scrape_vegnella()
+    return {"status": "Dáta z vegnella.sk boli obnovené!", "preview": WEBSITE_DATA[:200]}
+
+@app.post("/api/chat")
+async def chat(req: ChatRequest):
+    try:
+        # Ak sú dáta prázdne, skúsim ich dočítať
+        if not WEBSITE_DATA:
+            scrape_vegnella()
+
+        system_prompt = f"""
+Si priateľský, prirodzený a nápomocný AI asistent pre bistro Vegnella.
+Tvojou úlohou je pomáhať zákazníkom s otázkami ohľadom denného menu, ponuky, otváracích hodín a reštaurácie.
+
+AKTUÁLNE INFORMÁCIE Z WEBU VEGNELLA.SK:
+---
+{WEBSITE_DATA}
+---
+
+Pravidlá pre tvoj prejav:
+1. Reaguj prirodzene, ľudsky a kontextuálne na základe celého priebehu konverzácie.
+2. Ak zákazník napíše iba "aha ok", "ďakujem", "jasné" a podobne, odpovedz krátko a zdvorilo (napr. "Rado sa stalo! Ak budeš cokolvek potrebovať, kľudne sa spýtaj. 🌿"). NESPOMÍNAJ zbytočne znova menu, ak sa naň už nepýta.
+3. Používaj informácie z webu vyššie na presné odpovede o menu a bistre, ale nevnucuj ich pri každej správnej reakcii.
+"""
+
+        full_conversation = [{"role": "system", "content": system_prompt}] + req.messages
+
         response = client.chat.completions.create(
             model="gpt-4o-mini",
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {"role": "user", "content": data.text}
-            ],
-            temperature=0.3
+            messages=full_conversation
         )
-        odpoved = response.choices[0].message.content
-        return {"odpoved": odpoved}
+        reply = response.choices[0].message.content
+        return {"odpoved": reply}
     except Exception as e:
-        print(f"Chyba pri komunikácii s OpenAI: {e}")
-        return {"odpoved": "Ospravedlňujem sa, momentálne sa mi nedá spojiť s databázou menu."}
+        return {"odpoved": f"Chyba: {str(e)}"}
