@@ -24,12 +24,14 @@ WEBSITE_DATA = ""
 def scrape_vegnella():
     global WEBSITE_DATA
     
-    urls = [
+urls = [
         "https://vegnella.sk",
         "https://vegnella.sk/obedy",
+        "https://vegnella.sk/denne-menu",
+        "https://vegnella.sk/menu",
+        "https://vegnella.sk/ponuka",
         "https://vegnella.sk/raw-torty",
-        "https://vegnella.sk/kontakt",
-        "https://vegnella.sk/ponuka"
+        "https://vegnella.sk/kontakt"
     ]
     
     combined_text = ""
@@ -72,10 +74,11 @@ def home():
 
 @app.get("/api/refresh")
 def refresh_data():
-    scrape_vegnella()
+    log = scrape_vegnella()
     return {
-        "status": "Dáta z vegnella.sk boli úspešne obnovené!",
-        "dlzka_textu": len(WEBSITE_DATA),
+        "status": "Dáta boli obnovené!",
+        "prehlad_stranok": log,
+        "celkova_dlzka": len(WEBSITE_DATA),
         "nahlad": WEBSITE_DATA[:500]
     }
 
