@@ -24,7 +24,6 @@ WEBSITE_DATA = ""
 def scrape_vegnella():
     global WEBSITE_DATA
     
-    # Zoznam URL adries, ktoré má bot prejsť a stiahnuť z nich text
     urls = [
         "https://vegnella.sk",
         "https://vegnella.sk/obedy",
@@ -39,25 +38,27 @@ def scrape_vegnella():
     for url in urls:
         try:
             response = requests.get(url, headers=headers, timeout=8)
+            # Oprava kódovania slovenčiny (diakritiky)
+            response.encoding = 'utf-8'
+            
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 
-                # Vyčistíme text od zbytočných skriptov a štýlov
-                for script in soup(["script", "style", "nav", "footer"]):
+                # Odstránime len neviditeľný kód (skripty a štýly)
+                for script in soup(["script", "style"]):
                     script.extract()
                     
                 text = soup.get_text(separator=' ', strip=True)
                 if text:
                     combined_text += f"\n--- OBSAH Z PODSTRÁNKY: {url} ---\n{text}\n"
-                print(f"✅ Úspešne načítaná adresa: {url}")
+                print(f"✅ Načítaná adresa: {url} (dĺžka textu: {len(text)})")
             else:
                 print(f"⚠️ Stránka {url} vrátila kód: {response.status_code}")
         except Exception as e:
             print(f"❌ Chyba pri sťahovaní {url}: {e}")
 
-    # Uložíme až 12 000 znakov, aby sa tam zmestil kompletný týždenný/denný lístok
-    WEBSITE_DATA = combined_text[:12000]
-    print("🚀 Aktualizácia dát z webu dokončená!")
+    WEBSITE_DATA = combined_text[:15000]
+    print(f"🚀 Celkovo stiahnutých {len(WEBSITE_DATA)} znakov.")
 
 # Načítame dáta hneď pri štarte aplikácie
 scrape_vegnella()
