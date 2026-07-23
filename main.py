@@ -18,13 +18,13 @@ app.add_middleware(
 
 client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
-# Globálna premenná pre uloženie dát zo všetkých podstránok webu
 WEBSITE_DATA = ""
 
 def scrape_vegnella():
     global WEBSITE_DATA
     
-urls = [
+    # Skúsime rôzne možnosti URL adries
+    urls = [
         "https://vegnella.sk",
         "https://vegnella.sk/obedy",
         "https://vegnella.sk/denne-menu",
@@ -35,34 +35,36 @@ urls = [
     ]
     
     combined_text = ""
+    status_log = []
     headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
 
     for url in urls:
         try:
-            response = requests.get(url, headers=headers, timeout=8)
-            # Oprava kódovania slovenčiny (diakritiky)
+            response = requests.get(url, headers=headers, timeout=8, allow_redirects=True)
             response.encoding = 'utf-8'
             
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 
-                # Odstránime len neviditeľný kód (skripty a štýly)
+                # Vyčistíme skripty a štýly
                 for script in soup(["script", "style"]):
                     script.extract()
                     
                 text = soup.get_text(separator=' ', strip=True)
-                if text:
+                if len(text) > 100:
                     combined_text += f"\n--- OBSAH Z PODSTRÁNKY: {url} ---\n{text}\n"
-                print(f"✅ Načítaná adresa: {url} (dĺžka textu: {len(text)})")
+                    status_log.append(f"OK ({len(text)} znakov): {url}")
+                else:
+                    status_log.append(f"PRÁZDNE: {url}")
             else:
-                print(f"⚠️ Stránka {url} vrátila kód: {response.status_code}")
+                status_log.append(f"CHYBA {response.status_code}: {url}")
         except Exception as e:
-            print(f"❌ Chyba pri sťahovaní {url}: {e}")
+            status_log.append(f"ZLYHALO: {url} ({str(e)})")
 
     WEBSITE_DATA = combined_text[:15000]
-    print(f"🚀 Celkovo stiahnutých {len(WEBSITE_DATA)} znakov.")
+    return status_log
 
-# Načítame dáta hneď pri štarte aplikácie
+# Spustíme scraping pri štarte
 scrape_vegnella()
 
 class ChatRequest(BaseModel):
@@ -85,7 +87,6 @@ def refresh_data():
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     try:
-        # Ak by bola pamäť náhodou prázdna, vynútime stiahnutie
         if not WEBSITE_DATA:
             scrape_vegnella()
 
@@ -99,9 +100,9 @@ AKTUÁLNE TEXTOVÉ DÁTA ZO VŠETKÝCH PODSTRÁNOK VEGNELLA.SK:
 
 PRAVIDLÁ A INŠTRUKCIE PRE ODPOVEĎ:
 1. Ak sa zákazník pýta "aké je menu", "čo máte na obed", "aké sú jedlá" a pod., HNEĎ VYPIŠ konkrétne názvy polievok, hlavných jedál alebo ponuky, ktoré vidíš v texte vyššie!
-2. NIKDY neodpovedaj len všeobecnými omáčkami typu "máme čerstvé a zdravé jedlá, pozrite na web". Daj zákazníkovi PRIAMO zoznam jedál z textu!
-3. Odpovedaj VÝHRADNE na základe textu vyššie. Ak konkrétne informácie (napr. presné ingrediencie konkrétneho koláča) v texte chýbajú, zdvorilo to priznaj a nehalucinuj/nevymýšľaj si vlastné recepty.
-4. Pri bežných pozdravoch alebo odpovediach typu "ok", "vďaka", "super" odpovedaj krátko, zdvorilo a bez opätovného vnucovania celého menu.
+2. NIKDY neodpovedaj len všeobecnými omáčkami typu "máme čerstvé a zdravé jedlá". Daj zákazníkovi PRIAMO zoznam jedál z textu!
+3. Odpovedaj VÝHRADNE na základe textu vyššie. Ak konkrétne informácie v texte chýbajú, zdvorilo to priznaj a nehalucinuj.
+4. Pri bežných pozdravoch alebo odpovediach typu "ok", "vďaka" odpovedaj krátko a zdvorilo.
 """
 
         full_conversation = [{"role": "system", "content": system_prompt}] + req.messages
