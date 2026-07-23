@@ -23,8 +23,8 @@ WEBSITE_DATA = ""
 def scrape_vegnella():
     global WEBSITE_DATA
     
-    # Skúsime rôzne možnosti URL adries
-urls = [
+    # Presné URL adresy so správnymi .html koncovkami
+    urls = [
         "https://www.vegnella.sk",
         "https://www.vegnella.sk/obedy.html",
         "https://www.vegnella.sk/ponuka.html",
@@ -49,7 +49,7 @@ urls = [
                     script.extract()
                     
                 text = soup.get_text(separator=' ', strip=True)
-                if len(text) > 100:
+                if len(text) > 50:
                     combined_text += f"\n--- OBSAH Z PODSTRÁNKY: {url} ---\n{text}\n"
                     status_log.append(f"OK ({len(text)} znakov): {url}")
                 else:
@@ -79,7 +79,7 @@ def refresh_data():
         "status": "Dáta boli obnovené!",
         "prehlad_stranok": log,
         "celkova_dlzka": len(WEBSITE_DATA),
-        "nahlad": WEBSITE_DATA[:500]
+        "nahlad": WEBSITE_DATA[:800]
     }
 
 @app.post("/api/chat")
