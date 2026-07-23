@@ -11,7 +11,7 @@
         .chat-box { flex: 1; padding: 15px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
         .message { padding: 10px 14px; border-radius: 18px; max-width: 80%; word-wrap: break-word; font-size: 0.95em; line-height: 1.4; }
         .user { background: #e8f5e9; color: #2e7d32; align-self: flex-end; border-bottom-right-radius: 2px; }
-        .bot { background: #f0f0f0; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; whitespace: pre-line; }
+        .bot { background: #f0f0f0; color: #333; align-self: flex-start; border-bottom-left-radius: 2px; white-space: pre-line; }
         .input-area { display: flex; border-top: 1px solid #eee; padding: 10px; background: #fff; }
         input { flex: 1; border: 1px solid #ccc; padding: 10px 14px; border-radius: 20px; outline: none; }
         button { background: #f8b02b; color: white; border: none; padding: 10px 15px; margin-left: 8px; border-radius: 50%; cursor: pointer; font-weight: bold; }
@@ -32,8 +32,8 @@
 </div>
 
 <script>
-    // ⚠️ SEM VLOŽ TVOJU AKTUÁLNU ADRESU Z LOCALTUNNELU (pridaj na koniec /api/chat):
-    const TUNNEL_URL = "https://olive-months-remain.loca.lt/api/chat";
+    // 🌐 TRVALÁ ADRESA NA RENDER.COM
+    const TUNNEL_URL = "https://vegnella-bot.onrender.com/api/chat";
 
     async function sendMessage() {
         const input = document.getElementById('userInput');
