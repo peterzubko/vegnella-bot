@@ -5,6 +5,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
+from datetime import datetime
+from zoneinfo import ZoneInfo
+
 
 app = FastAPI()
 
@@ -88,8 +91,33 @@ async def chat(req: ChatRequest):
         if not WEBSITE_DATA:
             scrape_vegnella()
 
+        # Získanie presného dátumu a času na Slovensku
+        slovakia_tz = ZoneInfo("Europe/Bratislava")
+        now = datetime.now(slovakia_tz)
+        current_time_str = now.strftime("%A, %d.%m.%Y, %H:%M hodín")
+        
+        # Preklad názvu dňa do slovenčiny
+        dni_sk = {
+            'Monday': 'Pondelok', 'Tuesday': 'Utorok', 'Wednesday': 'Streda',
+            'Thursday': 'Štvrtok', 'Friday': 'Piatok', 'Saturday': 'Sobota', 'Sunday': 'Nedeľa'
+        }
+        for en, sk in dni_sk.items():
+            current_time_str = current_time_str.replace(en, sk)
+
         system_prompt = f"""
 Si oficiálny, priateľský a nápomocný AI asistent pre bistro Vegnella.
+
+AKTUÁLNY REÁLNY ČAS A DÁTUM (Slovensko):
+{current_time_str}
+
+PRAVIDLÁ PRE DONÁŠKU A ODBER:
+- Prijímanie objednávok na DONÁŠKU prebieha LEN do 10:00 hod.
+- OSOBNÝ ODBER jedla je možný do 16:00 hod.
+
+DÔLEŽITÁ INŠTRUKCIE K ČASU:
+- Vždy porovnaj aktuálny čas ({current_time_str}) s pravidlami.
+- Ak sa zákazník pýta na objednávku/donášku a aktuálny čas je po 10:00, natvrdo a presne mu povedz, že na dnešnú donášku je už po časovom limite (po 10:00), ale je možný osobný odber do 16:00.
+- NIKDY nepoužívaj neurčité formulácie typu "ak je pred týmto časom". Ty vieš, koľko je hodín, tak odpovedaj priamo podľa aktuálneho času!
 
 AKTUÁLNE TEXTOVÉ DÁTA ZO VŠETKÝCH PODSTRÁNOK VEGNELLA.SK:
 ---
@@ -97,10 +125,11 @@ AKTUÁLNE TEXTOVÉ DÁTA ZO VŠETKÝCH PODSTRÁNOK VEGNELLA.SK:
 ---
 
 PRAVIDLÁ A INŠTRUKCIE PRE ODPOVEĎ:
-1. Ak sa zákazník pýta "aké je menu", "čo máte na obed", "aké sú jedlá" a pod., HNEĎ VYPIŠ konkrétne názvy polievok, hlavných jedál alebo ponuky, ktoré vidíš v texte vyššie!
+1. Ak sa zákazník pýta "aké je menu", "čo máte na obed", "aké sú jedlá" a pod., HNEĎ VYPIŠ konkrétne názvy polievok, hlavných jedál alebo ponuky pre dnešný deň!
 2. NIKDY neodpovedaj len všeobecnými omáčkami typu "máme čerstvé a zdravé jedlá". Daj zákazníkovi PRIAMO zoznam jedál z textu!
 3. Odpovedaj VÝHRADNE na základe textu vyššie. Ak konkrétne informácie v texte chýbajú, zdvorilo to priznaj a nehalucinuj.
 4. Pri bežných pozdravoch alebo odpovediach typu "ok", "vďaka" odpovedaj krátko a zdvorilo.
+5. Odpovedaj stále priamo a stručne, bez zbytočných omáčok. Ak je otázka zložitá, rozdeľ odpoveď do odsekov.
 """
 
         full_conversation = [{"role": "system", "content": system_prompt}] + req.messages
