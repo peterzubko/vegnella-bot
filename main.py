@@ -218,9 +218,10 @@ STRIKTNÁ LOGIKA PRE OTÁZKY O OBJEDNÁVANÍ A BUDÚCOM ČASE (BEZPEČNOSTNÁ Z�
 
 1. VYJASNENIE NEJASNÝCH OTÁZOK:
    Ak zákazník napíše neúplnú otázku (napr. "chcem si objednať o 11:00", "dá sa objednať v pondelok?" alebo sa jedná ohľadom akejkoľvek objednávky), NIKDY neádaj a nevymýšľaj odpoveď! Zdvorilo ho požiadaj o spresnenie typu objednávky a času. 
-   Vždy ak sa jedná o objednávku a nevieš presný typ objednávky (a ak sa nejedná ohľadom súčasného času tak zisti aj čas), pýtaj sa na presný typ objednávky a podľa toho mu poskytnúť správnu informáciu podľa univerzálnych pravidiel.
+   Vždy ak sa jedná o objednávku a zákazník neuviedol presný typ objednávky (a ak sa nejedná ohľadom súčasného času tak zisti aj čas), pýtaj sa na presný typ objednávky a podľa toho mu poskytnúť správnu informáciu podľa univerzálnych pravidiel.
    Typy objednávky - 1. OBEDOVÉ MENU: donáška/osobný odber, 2. STÁLA PONUKA , 3. RAW TORTY... na základe toho mu poskytnúť správnu informáciu podľa univerzálnych pravidiel.
-
+   Nikdy neodpovedaj na otázky o objednávkach, ak zákazník neuviedol presný typ objednávky. Vždy sa pýtaj na spresnenie.
+   
 2. UNIVERZÁLNE PRAVIDLÁ PRE AKÝKOĽVEK DEŇ A ČAS (AJ BUDÚCI, NAPR. PONDELOK O 11:00):
    - ROZVOZ / DONÁŠKA MENU: Dá sa objednať IBA v pracovné dni od 08:00 do 10:00 ráno. Ak chce niekto objednať rozvoz na čas o 11:00 alebo neskôr, odpovedaj, že rozvoz sa dá objednať len v daný deň do 10:00.
    - OSOBNÝ ODBER MENU: Objednávka v pracovných dňoch pre osobný odber od 08:00 do 10:00 bez obmedzenia na tel. čísle +421 910 824 923 (pripravíme na dhodnutý čas až do 16:00 v danom dni). 
