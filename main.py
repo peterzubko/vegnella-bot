@@ -88,7 +88,10 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://www.vegnella.sk",
+        "https://vegnella.sk"
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -147,16 +150,16 @@ async def chat(req: ChatRequest):
             if 10 <= hour < 12:
                 STATUS_TERAZ = "Dnes je SOBOTA (10:00 - 12:00) - Bio obchod je OTVORENÝ. Prijímajú sa aj objednávky na RAW torty (min. 24h vopred). Teplé jedlá sa nevaria."
             else:
-                STATUS_TERAZ = "Dnes je SOBOTA - ZATVORENÉ. Bio obchod bol otvorený 10:00 - 12:00. Teplé jedlá sa nevaria."
+                STATUS_TERAZ = "Dnes je SOBOTA - ZATVORENÉ. Bio obchod bol otvorený 10:00 - 12:00. Teplé jedlá sa nevaria. Objednávky niesu možné."
         else: # PRACOVNÉ DNI
             if hour < 8:
                 STATUS_TERAZ = "Je pracovný deň pred 08:00 (ZATVORENÉ). Otvárame o 08:00."
             elif 8 <= hour < 10:
-                STATUS_TERAZ = "Je pracovný deň (08:00 - 10:00) - OTVORENÉ. Prijíma sa donáška aj osobný odber obeda, stála ponuka, RAW torty aj Bio obchod."
+                STATUS_TERAZ = "Je pracovný deň (08:00 - 10:00) - OTVORENÉ. Prijíma sa donáška aj osobný odber obeda, osobný odber pre stálu ponuku, objednávky na RAW torty a Bio obchod je otvorený."
             elif 10 <= hour < 16:
-                STATUS_TERAZ = "Je pracovný deň (10:00 - 16:00) - OTVORENÉ. Donáška obeda na dnes skončila (bola do 10:00). Možný je osobný odber obeda po overení dostupnosti, stála ponuka na osobný odber, RAW torty a Bio obchod."
+                STATUS_TERAZ = "Je pracovný deň (10:00 - 16:00) - OTVORENÉ. Donáška obeda na dnes skončila (bola do 10:00). Možný je osobný odber obeda po overení dostupnosti, stála ponuka na osobný odber, objednávky na RAW torty a Bio obchod je otvorený."
             else:
-                STATUS_TERAZ = "Je po 16:00 - ZATVORENÉ."
+                STATUS_TERAZ = "Je po 16:00 - ZATVORENÉ. Akékoľvek objednávky na dnes už nie sú možné. Bio obchod je zatvorený."
 
         system_prompt = f"""
 Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
@@ -195,7 +198,7 @@ Pravidlá odpovedí sú rozdelené do 5 kategórií:
 - Nákup na predajni je možný počas všetkých otváracích hodín (Pracovné dni 08:00 - 16:00, Sobota 10:00 - 12:00).
 
 5. KATEGÓRIA: VŠEOBECNÉ INFORMÁCIE A OTVÁRACIE HODINY
-- Informácie o otváracích hodinách, kontakte a fungovaní bistra poskytuj kedykoľvek.
+- Informácie o otváracích hodinách, kontakte, fungovaní bistra, fungovaní objednávok a informácie ohľadom stálej ponuky poskytuj kedykoľvek.
 - Otváracie hodiny: Pracovné dni 08:00 - 16:00, Sobota 10:00 - 12:00 (Bio obchod a objednávky RAW toriet), Nedeľa CELÝ DEŇ ZATVORENÉ.
 
 DÁTA Z WEBU VEGNELLA:
