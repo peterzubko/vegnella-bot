@@ -160,7 +160,7 @@ async def chat(req: ChatRequest):
 - Objednávky Menu (Osobný odber): ZATVORENÉ
 - Objednávky Stála ponuka / Nápoje: ZATVORENÉ
 - Objednávky RAW torty: ZATVORENÉ
-- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny): POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella): POVOLENÉ NONSTOP
 """
         elif day_en == 'Saturday':
             if 10 <= hour < 12:
@@ -168,13 +168,13 @@ async def chat(req: ChatRequest):
 - Bio obchod: OTVORENÝ (zákazníci nás môžu navštíviť a vybrať si zo sortimentu)
 - Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred na +421 910 824 923)
 - Objednávky Menu a stála ponuka: ZATVORENÉ (teplé jedlá sa nevaria)
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella): POVOLENÉ NONSTOP
 """
             else:
                 STATUS_TERAZ = """
 - Bio obchod: ZATVORENÝ (bol otvorený 10:00 - 12:00)
 - Akékoľvek objednávky: ZATVORENÉ
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella): POVOLENÉ NONSTOP
 """
         else: # Pracovné dni (Pondelok až Piatok)
             if 8 <= hour < 10:
@@ -184,7 +184,7 @@ async def chat(req: ChatRequest):
 - Objednávky Menu (Osobný odber): POVOLENÉ (prijíma sa na čas 11:00 - 16:00)
 - Objednávky Stála ponuka a nápoje: POVOLENÉ (iba osobný odber)
 - Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred)
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella)  : POVOLENÉ NONSTOP
 """
             elif 10 <= hour < 16:
                 STATUS_TERAZ = """
@@ -193,13 +193,13 @@ async def chat(req: ChatRequest):
 - Objednávky Menu (Osobný odber): POVOLENÉ (upozorni, že pre overenie voľných porcií je nutné zavolať na +421 910 824 923)
 - Objednávky Stála ponuka a nápoje: POVOLENÉ (iba osobný odber)
 - Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred)
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella)  : POVOLENÉ NONSTOP
 """
             else: # Pred 08:00 alebo po 16:00
                 STATUS_TERAZ = """
 - Bio obchod: ZATVORENÝ
 - Akékoľvek objednávky na dnes: ZATVORENÉ
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella)  : POVOLENÉ NONSTOP
 """
 
         # SYSTEM PROMPT OBSAHUJÚCI VŠETKY MANTINELY A PRAVIDLÁ
