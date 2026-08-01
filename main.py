@@ -173,11 +173,12 @@ DÔLEŽITÉ PRAVIDLO PRE VYHODNOCOVANIE ČASU:
      * Bio obchod: OTVORENÝ.
 
    - Čas pred 08:00 alebo po 16:00:
-     * Objednávky na daný deň sú ZATVORENÉ.
+     * Objednávky na tento čas sú ZATVORENÉ.
 
 2. SOBOTA:
-   - Čas 10:00 až 12:00: Otvorený LEN Bio obchod a RAW torty (min. 24h vopred na +421 910 824 923). Teplé jedlá sa nevaria.
-   - Mimo 10:00 - 12:00: ZATVORENÉ.
+   - Čas 10:00 až 12:00: Otvorený LEN Bio obchod a RAW torty (min. 24h vopred na +421 910 824 923). Jedlo nepripravujeme.
+   - Mimo 10:00 - 12:00: ZATVORENÉ. Objednávky na tento čas sú ZATVORENÉ.
+   - Nikdy nehovor "príďte zajtra", ale "v pondelok ({next_monday_date})".
 
 3. NEDEĽA:
    - Celý deň ZATVORENÉ. Nikdy nehovor "príďte zajtra", ale "v pondelok ({next_monday_date})".
