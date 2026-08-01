@@ -110,7 +110,7 @@ async def chat(req: ChatRequest):
         if not WEBSITE_DATA:
             scrape_vegnella()
 
-        # --- EXACT TIME & DAY LOGIC (PYTHON) ---
+        # --- LOGIKA REÁLNEHO ČASU A DŇA (SLOVENSKO) ---
         slovakia_tz = ZoneInfo("Europe/Bratislava")
         now = datetime.now(slovakia_tz)
         
@@ -124,16 +124,16 @@ async def chat(req: ChatRequest):
 
         hour = now.hour
 
-        # PREVÁDZKOVÁ LOGIKA
+        # PREVÁDZKOVÁ LOGIKA PODĽA ČASOVÝCH OBDOBÍ
         if day_en == 'Sunday':
             STATUS_TEXT = """
             STAV PREVÁDZKY: Dnes je NEDEĽA.
-            - VARENÉ JEDLÁ A MENU: Nevarí sa. Donáška ani odber obeda nie sú možné. Nové menu na pondelok sa pripravuje.
+            - VARENÉ JEDLÁ A MENU: Nevarí sa. Donáška ani osobný odber obeda NIE SÚ MOŽNÉ. Nové menu na pondelok sa ešte len pripravuje.
             - RAW TORTY: Sú na objednávku 24h vopred. Zákazník si ich MÔŽE dohodnúť/objednať na t.č. +421 910 824 923.
             """
         elif day_en == 'Saturday':
             is_shop_open = (10 <= hour < 12)
-            shop_status = "BIO OBCHOD je aktuálne OTVORENÝ (10:00 - 12:00)." if is_shop_open else "BIO OBCHOD je dnes otvorený od 10:00 do 12:00."
+            shop_status = "BIO OBCHOD je aktuálne OTVORENÝ (10:00 - 12:00)." if is_shop_open else "BIO OBCHOD je dnes otvorený od 10:00 do 12:00 (v tejto chvíli je ZATVORENÝ)."
             
             STATUS_TEXT = f"""
             STAV PREVÁDZKY: Dnes je SOBOTA. {shop_status}
@@ -141,7 +141,7 @@ async def chat(req: ChatRequest):
             - RAW TORTY: RAW torty sa objednávajú vopred (aspoň 24h vopred). Zákazník si RAW TORTU MÔŽE OBJEDNAŤ kedykoľvek telefonicky na +421 910 824 923!
             - NIKDY nehovor zákazníkovi, že si nemôže objednať RAW tortu kvôli hodinám obchodu. Na torty stačí zavolať a dohodnúť sa na t.č. +421 910 824 923.
             """
-        else: # PRACOVNÉ DNI
+        else: # PRACOVNÉ DNI (PONDELOK - PIATOK)
             if hour < 8:
                 STATUS_TEXT = """
                 STAV PREVÁDZKY: Je pracovný deň (pred 08:00). Otvárame o 08:00.
@@ -151,13 +151,13 @@ async def chat(req: ChatRequest):
             elif 8 <= hour < 10:
                 STATUS_TEXT = """
                 STAV PREVÁDZKY: Je pracovný deň (08:00 - 10:00).
-                - DONÁŠKA DENNÉHO MENU JE OTVORENÁ (do 10:00).
+                - DONÁŠKA DENNÉHO MENU JE OTVORENÁ A MOŽNÁ (do 10:00).
                 - RAW torty sa dajú objednať vopred.
                 """
             elif 10 <= hour < 16:
                 STATUS_TEXT = """
                 STAV PREVÁDZKY: Je pracovný deň (10:00 - 16:00).
-                - Donáška denného menu je zatvorená. Osobný odber obeda je možný po overení na +421 910 824 923.
+                - Donáška denného menu je ZATVORENÁ (bola do 10:00). Osobný odber obeda je možný do 16:00 po overení na +421 910 824 923.
                 - RAW torty sa dajú objednať vopred.
                 """
             else:
