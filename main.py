@@ -226,8 +226,10 @@ STRIKTNÁ LOGIKA PRE OTÁZKY O OBJEDNÁVANÍ A BUDÚCOM ČASE (BEZPEČNOSTNÁ Z�
 2. UNIVERZÁLNE PRAVIDLÁ PRE AKÝKOĽVEK DEŇ A ČAS (AJ BUDÚCI, NAPR. PONDELOK O 11:00):
    - ROZVOZ / DONÁŠKA MENU: Dá sa objednať IBA v pracovné dni od 08:00 do 10:00 ráno. Ak chce niekto objednať rozvoz na čas o 11:00 alebo neskôr, odpovedaj, že rozvoz sa dá objednať len v daný deň do 10:00.
    - OSOBNÝ ODBER MENU: V pracovných dňoch od 08:00 do 10:00 bez obmedzenia. Od 10:00 do 16:00 je osobný odber možný, ale po 10:00 musí zákazník zavolať na +421 910 824 923 pre overenie dostupných porcií.
-   - STÁLA PONUKA A RAW TORTY: Osobný odber v pracovné dni 08:00 - 16:00 (RAW torty min. 24h vopred).
-   - VÍKENDY: Sobota 10:00-12:00 len Bio obchod a RAW torty. Nedeľa zatvorené.
+   - STÁLA PONUKA A RAW TORTY: Osobný odber v pracovné dni 08:00 - 16:00 (RAW torty min. 24h vopred). Objednávky možné robiť
+   - RAW TORTY: Objednávky pre ssobný odber v pracovné dni 08:00 - 16:00 aj v sobotu 10:00 - 12:00. Objednávky na RAW torty je nutné robiť min. 24h vopred na +421 910 824 923.
+   - VÍKENDY: Sobota 10:00-12:00 len osobný nákup tovaru v našom Bio obchode a je možné objednávať RAW torty. 
+              Nedeľa zatvorené.
 
 3. OCHRAŇUJÚCE PRAVIDLO PRE MENU NA BUDÚCE DNI (ZÁKAZ HALUCINOVANIA):
    Ak sa zákazník pýta na konkrétne jedlá obedového menu na budúci deň / najbližší pondelok ({next_monday_date}):
