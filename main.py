@@ -1,4 +1,5 @@
 import os
+import time
 import requests
 from bs4 import BeautifulSoup
 from fastapi import FastAPI
@@ -7,26 +8,14 @@ from pydantic import BaseModel
 from openai import OpenAI
 from datetime import datetime
 from zoneinfo import ZoneInfo
-
-
-app = FastAPI()
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+from apscheduler.schedulers.background import BackgroundScheduler
+from contextlib import asynccontextmanager
 
 WEBSITE_DATA = ""
 
 def scrape_vegnella():
     global WEBSITE_DATA
     
-    # Presné URL adresy so správnymi .html koncovkami
     urls = [
         "https://www.vegnella.sk",
         "https://www.vegnella.sk/obedy.html",
@@ -37,17 +26,22 @@ def scrape_vegnella():
     
     combined_text = ""
     status_log = []
-    headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)'}
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+    }
 
     for url in urls:
         try:
-            response = requests.get(url, headers=headers, timeout=8, allow_redirects=True)
+            fresh_url = f"{url}?_nocache={int(time.time())}"
+            response = requests.get(fresh_url, headers=headers, timeout=8, allow_redirects=True)
             response.encoding = 'utf-8'
             
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
                 
-                # Vyčistíme skripty a štýly
                 for script in soup(["script", "style"]):
                     script.extract()
                     
@@ -63,10 +57,42 @@ def scrape_vegnella():
             status_log.append(f"ZLYHALO: {url} ({str(e)})")
 
     WEBSITE_DATA = combined_text[:15000]
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Dáta z Vegnella.sk boli úspešne aktualizované.")
     return status_log
 
-# Spustíme scraping pri štarte
-scrape_vegnella()
+# Správa životného cyklu aplikácie (Lifespan)
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # 1. Pri štarte servera stiahneme aktuálne dáta
+    scrape_vegnella()
+    
+    # 2. Nastavíme plánovač na každý pracovný deň (Po-Pi) o 07:00 ráno
+    scheduler = BackgroundScheduler(timezone="Europe/Bratislava")
+    scheduler.add_job(
+        scrape_vegnella, 
+        trigger='cron', 
+        day_of_week='mon-fri', 
+        hour=7, 
+        minute=0
+    )
+    scheduler.start()
+    
+    yield  # Aplikácia beží...
+    
+    # 3. Pri vypnutí servera vypneme plánovač
+    scheduler.shutdown()
+
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 class ChatRequest(BaseModel):
     messages: list
@@ -79,7 +105,7 @@ def home():
 def refresh_data():
     log = scrape_vegnella()
     return {
-        "status": "Dáta boli obnovené!",
+        "status": "Dáta boli manuálne obnovené!",
         "prehlad_stranok": log,
         "celkova_dlzka": len(WEBSITE_DATA),
         "nahlad": WEBSITE_DATA[:800]
@@ -88,6 +114,7 @@ def refresh_data():
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     try:
+        # Ak by bola pamäť z nejakého dôvodu prázdna, poistka:
         if not WEBSITE_DATA:
             scrape_vegnella()
 
@@ -96,7 +123,6 @@ async def chat(req: ChatRequest):
         now = datetime.now(slovakia_tz)
         current_time_str = now.strftime("%A, %d.%m.%Y, %H:%M hodín")
         
-        # Preklad názvu dňa do slovenčiny
         dni_sk = {
             'Monday': 'Pondelok', 'Tuesday': 'Utorok', 'Wednesday': 'Streda',
             'Thursday': 'Štvrtok', 'Friday': 'Piatok', 'Saturday': 'Sobota', 'Sunday': 'Nedeľa'
