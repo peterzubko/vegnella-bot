@@ -129,7 +129,7 @@ async def chat(req: ChatRequest):
             STATUS_TEXT = """
             STAV PREVÁDZKY: Dnes je NEDEĽA.
             - VARENÉ JEDLÁ A MENU: Nevarí sa. Donáška ani osobný odber obeda NIE SÚ MOŽNÉ. Nové menu na pondelok sa ešte len pripravuje.
-            - RAW TORTY: Sú na objednávku 24h vopred. Zákazník si ich MÔŽE dohodnúť/objednať na t.č. +421 910 824 923.
+            - RAW TORTY: Obnednať sa môžu iba počas otváracích hodín (pondelok - piatok 08:00 - 16:00, sobota 10:00 - 12:00) na t.č. +421 910 824 923.
             """
         elif day_en == 'Saturday':
             is_shop_open = (10 <= hour < 12)
@@ -137,9 +137,8 @@ async def chat(req: ChatRequest):
             
             STATUS_TEXT = f"""
             STAV PREVÁDZKY: Dnes je SOBOTA. {shop_status}
-            - VARENIE / DENNÉ MENU / STÁLA PONUKA: Cez víkend sa NEVARÍ! Žiadne teplé jedlá ani obedy sa nedajú objednať ani vyzdvihnúť. Nové menu bude v pondelok.
-            - RAW TORTY: RAW torty sa objednávajú vopred (aspoň 24h vopred). Zákazník si RAW TORTU MÔŽE OBJEDNAŤ kedykoľvek telefonicky na +421 910 824 923!
-            - NIKDY nehovor zákazníkovi, že si nemôže objednať RAW tortu kvôli hodinám obchodu. Na torty stačí zavolať a dohodnúť sa na t.č. +421 910 824 923.
+            - VARENIE / DENNÉ MENU / STÁLA PONUKA: Cez víkend sa NEVARÍ! Žiadne jedlá ani obedy sa nedajú objednať ani vyzdvihnúť. Nové menu bude v pondelok.
+            - Zákazník si RAW TORTU MÔŽE OBJEDNAŤ kedykoľvek telefonicky na +421 910 824 923 ale len počas otváracích hodín (sobota je to 10:00 - 12:00)!
             """
         else: # PRACOVNÉ DNI (PONDELOK - PIATOK)
             if hour < 8:
@@ -157,17 +156,18 @@ async def chat(req: ChatRequest):
             elif 10 <= hour < 16:
                 STATUS_TEXT = """
                 STAV PREVÁDZKY: Je pracovný deň (10:00 - 16:00).
-                - Donáška denného menu je ZATVORENÁ (bola do 10:00). Osobný odber obeda je možný do 16:00 po overení na +421 910 824 923.
-                - RAW torty sa dajú objednať vopred.
+                - Donáška denného menu je ZATVORENÁ (bola do 10:00). Osobný odber obeda je možný do 16:00 po overení dostupnosti porcie na +421 910 824 923.
+                - RAW torty sa dajú objednať.
                 """
             else:
                 STATUS_TEXT = """
                 STAV PREVÁDZKY: Je po 16:00. Bistro aj predajňa sú zatvorené.
-                - RAW torty sa dajú objednať na t.č. +421 910 824 923 (s dodaním o 24h alebo neskôr).
                 """
 
         system_prompt = f"""
 Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
+NIKDY na silu netlač zákazníka aby si čokoľvek objednal ak sa na to priamo nepýta.
+Hovor iba priamo k veci, ohľadom toho čo zákazník pýta. Nepíš mu o iných veciach, ktoré si nevyžiadal.
 
 AKTUÁLNY REÁLNY ČAS: {current_time_str}
 
@@ -178,11 +178,7 @@ PRÍSNE NARIADENIE STAVU PREVÁDZKY:
 
 PRAVIDLÁ ODPOVEDE:
 1. AK SA ZÁKAZNÍK PÝTA NA RAW TORTY ALEBO SI CHCE JEDNU OBJEDNAŤ:
-   - Potvrď mu, že si RAW tortu MÔŽE objednať na t.č. +421 910 824 923.
-   - Pripomeň, že RAW torty sa pripravujú čerstvé a je potrebné ich objednať aspoň 24 hodín vopred.
-   - NIKDY ho neodrádzaj tým, že je zatvorené, pokiaľ ide o RAW tortu!
-   - NIKDY na silu netlač zákazníka aby si čokoľvek objednal ak sa na to priamo nepýta.
-   - Horov iba priamo k veci, ohľadom toho čo zákazník pýta. Nepíš mu o iných veciach, ktoré si nevyžiadal.
+   - Pripomeň, že RAW torty sa pripravujú čerstvo a potom sa musia zamraziť a je potrebné ich objednať aspoň 24 hodín vopred.
 2. AK SA ZÁKAZNÍK PÝTA NA VARENÉ MENU / OBEDY CEZ VÍKEND:
    - Dôrazne vysvetli, že cez víkend sa nevarí a nové týždenné menu bude pripravené až na pondelok.
 3. FORMÁTOVANIE:
