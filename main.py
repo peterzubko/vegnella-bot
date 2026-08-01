@@ -19,7 +19,7 @@ WEBSITE_DATA = ""
 def sync_scrape_vegnella():
     """
     Stiahne textový obsah zo všetkých kľúčových podstránok Vegnella.sk.
-    Ošetruje cache, HTML balast a chybové stavy.
+    Ošetruje vyrovnávaciu pamäť (cache), HTML balast a chybové stavy.
     """
     global WEBSITE_DATA
     urls = [
@@ -40,14 +40,14 @@ def sync_scrape_vegnella():
 
     for url in urls:
         try:
-            # Pridanie Uniq Timestampu do URL na obídenie vyrovnávacej pamäte
+            # Unikátny timestamp pre obídenie serverovej cache
             fresh_url = f"{url}?_nocache={int(time.time())}"
             response = requests.get(fresh_url, headers=headers, timeout=4, allow_redirects=True)
             response.encoding = 'utf-8'
             
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, 'html.parser')
-                # Odstránenie JS kódov a CSS štýlov
+                # Odstránenie JS kódov a CSS štýlov pre čistý text
                 for script in soup(["script", "style"]):
                     script.extract()
                 
@@ -66,7 +66,7 @@ def sync_scrape_vegnella():
         # Uloženie dát (max 20 000 znakov pre úsporu tokenov)
         WEBSITE_DATA = combined_text[:20000]
     
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Dáta z Vegnella.sk obnovené.")
+    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Dáta z Vegnella.sk boli úspešne obnovené.")
     return status_log
 
 # --- 2. ASYNCHRÓNNY OBAL (NEBLOKUJE SERVER) ---
@@ -77,10 +77,10 @@ async def async_scrape_vegnella():
 # --- 3. LIFESPAN A PLÁNOVAČ (APSCHEDULER) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Prvé sťahovanie pri štartovaní servera
+    # Prvé načítanie pri štarte aplikácie
     await async_scrape_vegnella()
     
-    # Nastavenie časovača na každý pracovný deň o 07:00
+    # Nastavenie plánovača: každý pracovný deň o 07:00 ráno
     scheduler = BackgroundScheduler(timezone="Europe/Bratislava")
     scheduler.add_job(
         sync_scrape_vegnella, 
@@ -126,7 +126,7 @@ async def refresh_data():
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     try:
-        # Poistka pre prípad, že dáta na webe neboli na načítané
+        # Poistka pre prípad prázdnych dát
         if not WEBSITE_DATA:
             await async_scrape_vegnella()
 
@@ -152,7 +152,7 @@ async def chat(req: ChatRequest):
         next_monday_date = (now + timedelta(days=days_ahead)).strftime("%d.%m.%Y")
         hour = now.hour
 
-        # PRESNÉ ČASOVÉ ÚSEKY A POVOLENÉ AKCIE
+        # PRESNÉ ČASOVÉ ÚSEKY PRE AKTUÁLNY MOMENT
         if day_en == 'Sunday':
             STATUS_TERAZ = """
 - Bio obchod: ZATVORENÝ
@@ -160,7 +160,7 @@ async def chat(req: ChatRequest):
 - Objednávky Menu (Osobný odber): ZATVORENÉ
 - Objednávky Stála ponuka / Nápoje: ZATVORENÉ
 - Objednávky RAW torty: ZATVORENÉ
-- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella): POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny): POVOLENÉ NONSTOP
 """
         elif day_en == 'Saturday':
             if 10 <= hour < 12:
@@ -168,23 +168,23 @@ async def chat(req: ChatRequest):
 - Bio obchod: OTVORENÝ (zákazníci nás môžu navštíviť a vybrať si zo sortimentu)
 - Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred na +421 910 824 923)
 - Objednávky Menu a stála ponuka: ZATVORENÉ (teplé jedlá sa nevaria)
-- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella): POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
 """
             else:
                 STATUS_TERAZ = """
 - Bio obchod: ZATVORENÝ (bol otvorený 10:00 - 12:00)
 - Akékoľvek objednávky: ZATVORENÉ
-- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella): POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
 """
         else: # Pracovné dni (Pondelok až Piatok)
             if 8 <= hour < 10:
                 STATUS_TERAZ = """
 - Bio obchod: OTVORENÝ
 - Objednávky Menu (Rozvoz): POVOLENÉ (rozvoz prebieha 11:00 - 13:00, pripočítava sa obal 0.50 € veľký / 0.30 € malý)
-- Objednávky Menu (Osobný odber): POVOLENÉ (prijíma sa na čas 11:00 - 16:00)
+- Objednávky Menu (Osobný odber): POVOLENÉ (prijíma sa na čas vyzdvihnutia 11:00 - 16:00)
 - Objednávky Stála ponuka a nápoje: POVOLENÉ (iba osobný odber)
 - Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred)
-- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella)  : POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
 """
             elif 10 <= hour < 16:
                 STATUS_TERAZ = """
@@ -193,16 +193,16 @@ async def chat(req: ChatRequest):
 - Objednávky Menu (Osobný odber): POVOLENÉ (upozorni, že pre overenie voľných porcií je nutné zavolať na +421 910 824 923)
 - Objednávky Stála ponuka a nápoje: POVOLENÉ (iba osobný odber)
 - Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred)
-- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella)  : POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
 """
             else: # Pred 08:00 alebo po 16:00
                 STATUS_TERAZ = """
 - Bio obchod: ZATVORENÝ
 - Akékoľvek objednávky na dnes: ZATVORENÉ
-- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny a ostatné relevantné ohľadom vegnella)  : POVOLENÉ NONSTOP
+- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
 """
 
-        # SYSTEM PROMPT OBSAHUJÚCI VŠETKY MANTINELY A PRAVIDLÁ
+        # SYSTEM PROMPT S NEPRIESTRELNOU BIZNIS LOGIKOU
         system_prompt = f"""
 Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
 
@@ -214,27 +214,31 @@ AKTUÁLNE POVOLENÉ A ZAKÁZANÉ ČINNOSTI PRE TÚTO CHVÍĽU:
 
 FORMÁTOVANIE: ZÁKAZ Markdown hviezdičiek (**text**) aj mriežok (#). Píš čistý text! Pre odrážky používaj výhradne pomlčky (-).
 
+STRIKTNÁ LOGIKA PRE OTÁZKY O OBJEDNÁVANÍ (DÔLEŽITÉ!):
+Dôsledne rozlišuj medzi ČASOM ZADÁVANIA OBJEDNÁVKY a ČASOM PLÁNOVANÉHO DORUČENIA/VYZDVIHNUTIA!
+
+1. ROZVOZ / DONÁŠKA MENU:
+   - Čas prijímania/zadávania objednávky: IBA v pracovné dni od 08:00 do 10:00 ráno.
+   - Čas doručovania jedla: Medzi 11:00 a 13:00.
+   - AK SA ZÁKAZNÍK PÝTA, ČI MÔŽE OBJEDNAŤ ROZVOZ O 11:00 (alebo kedykoľvek po 10:00): 
+     Odpovedaj STRIKTNE NIE! Vysvetli, že o 11:00 sa rozvoz už nedá objednať (uzávierka bola o 10:00). O 11:00 sa rozvoz už len doručuje zákazníkom.
+
+2. OSOBNÝ ODBER MENU:
+   - Čas zadávania objednávky cez bota: V pracovné dni od 08:00 do 10:00 ráno.
+   - Čas vyzdvihnutia jedla: V pracovné dni od 11:00 do 16:00.
+   - AK SA ZÁKAZNÍK PÝTA, ČI MÔŽE OBJEDNAŤ OSOBNÝ ODBER PO 10:00 (napr. o 11:00 alebo 12:00):
+     Odpovedaj, že po 10:00 už bot automatické objednávky neprijíma a z dôvodu overenia voľných porcií musí zákazník zavolať na +421 910 824 923.
+
 VŠEOBECNÉ PRAVIDLÁ SPRÁVANIA A BEZPEČNOSTI (STRIKTNÉ):
-1. TÉMA KONVERZÁCIE: Odpovedaj na otázky výlučne ohľadom bistra a bio obchodu Vegnella. Ak sa zákazník pýta na cudziu tému (napr. všeobecné recepty, iné reštaurácie, osobné otázky), zdvorilo mu vysvetli, že odpovedáš len na informácie a objednávky týkajúce sa bistra Vegnella.
+1. TÉMA KONVERZÁCIE: Odpovedaj na otázky výlučne ohľadom bistra a bio obchodu Vegnella. Ak sa zákazník pýta na cudziu tému, zdvorilo ho odmietni s tým, že odpovedáš len k témam bistra Vegnella.
 2. ZÁKAZ VYMÝŠĽANIA (HALUCINÁCIÍ): Vždy sa drž výhradne faktov uvedených v týchto inštrukciách a v dodaných dátach z webu. NIKDY si nevymýšľaj informácie ani nepoužívaj všeobecné vedomosti mimo dodaných dát.
-3. PREDAJNÝ TÓN: NIKDY na silu netlač zákazníka, aby si čokoľvek objednal, ak sa na to priamo nepýta.
-4. STRUČNOSŤ: Hovor iba priamo k veci ohľadom toho, čo sa zákazník pýta. Nepíš mu zbytočnú omáčku ani informácie, ktoré si nevyžiadal.
+3. PREDAJNÝ TÓN: NIKDY na silu netlač zákazníka do objednávok.
+4. STRUČNOSŤ: Hovor iba priamo k veci bez zbytočnej omáčky.
 
 PRAVIDLÁ SÚVISIACE S ČASOM A PONUKOU:
-
-1. NONSTOP INFORMOVANIE (24/7):
-   - Bez ohľadu na to, či je bistro otvorené alebo zatvorené, VŽDY plne odpovedaj na otázky ohľadom ponuky jedál, stálej ponuky, nápojov, RAW toriet, ich zloženia, obsahu bio obchodu, otváracích hodín a fungovania bistra.
-   - NIKDY neodmietaj poskytnúť informácie len preto, že je momentálne zatvorené!
-
-2. OVEROVANIE DÁTUMU OBEDOVÉHO MENU:
-   - Ak je víkend alebo po 16:00 a zákazník sa pýta na menu na najbližší pondelok ({next_monday_date}), skontroluj dátum v dodaných dátach z webu.
-   - Ak sú na webe uvedené staré dátumy z minulého týždňa, NIKDY ich nevydávaj za ponuku na pondelok {next_monday_date}! Vysvetli, že nové menu na nadchádzajúci týždeň sa na webe zverejňuje v pondelok ráno.
-
-3. ODKAZOVANIE NA INÉ DNI (ŽIADNE "ZAJTRA" CEZ VÍKEND):
-   - V sobotu a v nedeľu NIKDY nehovor zákazníkovi "príďte zajtra" alebo "spýtajte sa zajtra", pretože v nedeľu je bistro zatvorené. Vždy použi formuláciu "v najbližší pracovný deň, teda v pondelok ({next_monday_date})".
-
-4. OBMEDZENIA OBJEDNÁVOK:
-   - Striktne dodržiavaj sekciu "AKTUÁLNE POVOLENÉ A ZAKÁZANÉ ČINNOSTI". Ak je daná objednávka v tejto chvíli ZATVORENÁ, zdvorilo vysvetli pravidlá (napr. že donáška obeda sa prijíma iba v pracovné dni od 08:00 do 10:00).
+1. NONSTOP INFORMOVANIE (24/7): Bez ohľadu na otváracie hodiny VŽDY odpovedaj na otázky ohľadom ponuky, zloženia, cenníkov a otváracích hodín.
+2. OVEROVANIE DÁTUMU OBEDOVÉHO MENU: Ak je víkend/večer a na webe sú staré dáta z minulého týždňa, nevydávaj ich za nové menu na nadchádzajúci týždeň. Vysvetli, že nové menu bude zverejnené v pondelok ráno.
+3. ŽIADNE "ZAJTRA" CEZ VÍKEND: V sobotu a v nedeľu NIKDY nehovor "príďte zajtra" alebo "spýtajte sa zajtra", pretože v nedeľu je zatvorené. Vždy použi formuláciu "v najbližší pracovný deň, teda v pondelok ({next_monday_date})".
 
 DÁTA Z WEBU VEGNELLA:
 --------------------------------------------------
