@@ -6,7 +6,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
-from datetime import datetime
+from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
@@ -44,10 +44,12 @@ def scrape_vegnella():
                 
                 for script in soup(["script", "style"]):
                     script.extract()
-                    
-                text = soup.get_text(separator=' ', strip=True)
+                
+                # Záchrana formátu: Riadky oddeľujeme novým riadkom '\n'
+                text = soup.get_text(separator='\n', strip=True)
+                
                 if len(text) > 50:
-                    combined_text += f"\n--- OBSAH Z PODSTRÁNKY: {url} ---\n{text}\n"
+                    combined_text += f"\n=== OBSAH Z PODSTRÁNKY: {url} ===\n{text}\n"
                     status_log.append(f"OK ({len(text)} znakov): {url}")
                 else:
                     status_log.append(f"PRÁZDNE: {url}")
@@ -56,7 +58,7 @@ def scrape_vegnella():
         except Exception as e:
             status_log.append(f"ZLYHALO: {url} ({str(e)})")
 
-    WEBSITE_DATA = combined_text[:15000]
+    WEBSITE_DATA = combined_text[:20000]
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Dáta z Vegnella.sk boli úspešne aktualizované.")
     return status_log
 
@@ -101,7 +103,7 @@ def refresh_data():
         "status": "Dáta boli manuálne obnovené!",
         "prehlad_stranok": log,
         "celkova_dlzka": len(WEBSITE_DATA),
-        "nahlad": WEBSITE_DATA[:800]
+        "nahlad": WEBSITE_DATA[:1000]
     }
 
 @app.post("/api/chat")
@@ -110,7 +112,7 @@ async def chat(req: ChatRequest):
         if not WEBSITE_DATA:
             scrape_vegnella()
 
-        # --- LOGIKA REÁLNEHO ČASU A DŇA (SLOVENSKO) ---
+        # --- LOGIKA REÁLNEHO ČASU A KALENDÁRA ---
         slovakia_tz = ZoneInfo("Europe/Bratislava")
         now = datetime.now(slovakia_tz)
         
@@ -122,85 +124,59 @@ async def chat(req: ChatRequest):
         day_sk = dni_sk.get(day_en, day_en)
         current_time_str = f"{day_sk}, {now.strftime('%d.%m.%Y %H:%M hodín')}"
 
+        # Výpočet dátumu najbližšieho pondelka
+        days_ahead = (0 - now.weekday()) % 7
+        if days_ahead == 0 and now.hour >= 16:
+            days_ahead = 7  # Ak je pondelok po 16:00, najbližší pondelok je ten o týždeň
+        elif day_en in ['Saturday', 'Sunday']:
+            days_ahead = (7 - now.weekday()) % 7  # Cez víkend hľadáme nasledujúci pondelok
+            
+        next_monday_date = (now + timedelta(days=days_ahead)).strftime("%d.%m.%Y")
+
         hour = now.hour
 
-        # PREVÁDZKOVÁ LOGIKA PODĽA OTVÁRACÍCH HODÍN
+        # PREVÁDZKOVÝ STAV
         if day_en == 'Sunday':
-            STATUS_TEXT = """
-            STAV PREVÁDZKY: Dnes je NEDEĽA – CELÝ DEŇ ZATVORENÉ.
-            - VARENÉ JEDLÁ A MENU: Nevarí sa. Donáška ani osobný odber obeda NIE SÚ MOŽNÉ. Nové menu na pondelok sa ešte len pripravuje.
-            - RAW TORTY: Telefonické objednávky (+421 910 824 923) sú dnes ZATVORENÉ. Zákazník si ich môže objednať až v najbližších otváracích hodinách (Pondelok 08:00 - 16:00).
-            """
+            STATUS_TERAZ = "Dnes je NEDEĽA - bistro aj obchod sú CELÝ DEŇ ZATVORENÉ. Nevarí sa."
         elif day_en == 'Saturday':
             if 10 <= hour < 12:
-                STATUS_TEXT = """
-                STAV PREVÁDZKY: Dnes je SOBOTA (10:00 - 12:00) – BIO OBCHOD JE AKTUÁLNE OTVORENÝ.
-                - VARENIE / DENNÉ MENU / STÁLA PONUKA: Cez víkend sa NEVARÍ! Žiadne teplé jedlá sa nedajú objednať ani vyzdvihnúť.
-                - RAW TORTY: TELEFONICKÉ OBJEDNÁVKY NA +421 910 824 923 SÚ TERAZ OTVORENÉ (do 12:00)! RAW torty sa vyrábajú čerstvé a mrazia sa, preto je potrebné objednať ich aspoň 24 hodín vopred.
-                """
+                STATUS_TERAZ = "Dnes je SOBOTA (10:00 - 12:00) - Bio obchod je OTVORENÝ. Bistro nevarí."
             else:
-                STATUS_TEXT = """
-                STAV PREVÁDZKY: Dnes je SOBOTA – MIMO OTVÁRACÍCH HODÍN (ZATVORENÉ).
-                - BIO OBCHOD: Otvorený bol/bude LEN od 10:00 do 12:00. Momentálne je zatvorený.
-                - VARENIE / DENNÉ MENU: Nevarí sa.
-                - RAW TORTY: Telefonické objednávky na +421 910 824 923 sú v tejto chvíli ZATVORENÉ. Zavolať a objednať tortu bude možné opäť v Pondelok od 08:00.
-                """
-        else: # PRACOVNÉ DNI (PONDELOK - PIATOK)
+                STATUS_TERAZ = "Dnes je SOBOTA - ZATVORENÉ. Bistro nevarí."
+        else:
             if hour < 8:
-                STATUS_TEXT = """
-                STAV PREVÁDZKY: Je pracovný deň PRED OTVÁRACÍMI HODINAMI (pred 08:00). ZATVORENÉ.
-                - Otvárame o 08:00. Telefonické objednávky na RAW torty na +421 910 824 923 aj donášku obeda spustíme o 08:00.
-                """
+                STATUS_TERAZ = "Je pracovný deň pred 08:00 (ZATVORENÉ). Otvárame o 08:00."
             elif 8 <= hour < 10:
-                STATUS_TEXT = """
-                STAV PREVÁDZKY: Je pracovný deň (08:00 - 10:00) – VŠETKO JE OTVORENÉ.
-                - DONÁŠKA DENNÉHO MENU: Prijíma sa (LEN do 10:00).
-                - RAW TORTY: Telefonické objednávky na +421 910 824 923 SÚ OTVORENÉ (objednať 24h vopred).
-                """
+                STATUS_TERAZ = "Je pracovný deň (08:00 - 10:00) - OTVORENÉ. Donáška obedov sa prijíma."
             elif 10 <= hour < 16:
-                STATUS_TEXT = """
-                STAV PREVÁDZKY: Je pracovný deň (10:00 - 16:00) – OTVORENÉ.
-                - DONÁŠKA DENNÉHO MENU: ZATVORENÁ (bola do 10:00). Osobný odber obeda je možný do 16:00 po overení dostupnosti na +421 910 824 923.
-                - RAW TORTY: Telefonické objednávky na +421 910 824 923 SÚ OTVORENÉ (objednať 24h vopred).
-                """
+                STATUS_TERAZ = "Je pracovný deň (10:00 - 16:00) - OTVORENÉ. Donáška na dnes skončila (bola do 10:00), možný osobný odber."
             else:
-                STATUS_TEXT = """
-                STAV PREVÁDZKY: Je pracovný deň PO OTVÁRACÍCH HODINÁCH (po 16:00). ZATVORENÉ.
-                - Bistro, obchod aj telefónne linky sú na dnes ZATVORENÉ. Telefonické objednávky na RAW torty (+421 910 824 923) aj obedy budú možné opäť zajtra od 08:00.
-                """
+                STATUS_TERAZ = "Je po 16:00 - ZATVORENÉ."
 
         system_prompt = f"""
 Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
 
-PRAVIDLÁ SPRÁVANIA:
-- NIKDY na silu netlač zákazníka, aby si čokoľvek objednal, ak sa na to priamo nepýta.
-- Hovor iba priamo k veci ohľadom toho, čo sa zákazník pýta. Nepíš mu o iných veciach, ktoré si nevyžiadal.
-- Vždy sa drž výhradne faktov uvedených v týchto systémových inštrukciách a v dodaných dátach z webu Vegnella.
-- NIKDY si nevymýšľaj informácie ani nepoužívaj svoje všeobecné vedomosti mimo dodaných dát.
-- Odpovedaj zákazníkovi výlučne na základe aktuálnych dát z webu Vegnella a podľa aktuálneho reálneho času a dňa v Bratislave, Slovensko.
-- Odpovedaj na otázky výlučne ohľadom bistra Vegnella. Ak sa zákazník pýta na čokoľvek iné (mimo tematiky obchodu, bistra, ponuky či otváracích hodín), zdvorilo mu vysvetli, že odpovedáš len na informácie ohľadom bistra a bio obchodu Vegnella.
-
 AKTUÁLNY REÁLNY ČAS: {current_time_str}
+DÁTUM NAJBLIŽŠIEHO PONDELKA: {next_monday_date}
+AKTUÁLNY PREVÁDZKOVÝ STAV: {STATUS_TERAZ}
 
-==================================================
-PRÍSNE NARIADENIE STAVU PREVÁDZKY:
-{STATUS_TEXT}
-==================================================
+PRAVIDLÁ SPRÁVANIA:
+- Hovor priamo k veci, stručne a priateľsky.
+- Odpovedaj výhradne na otázky ohľadom bistra a bio obchodu Vegnella.
+- FORMÁTOVANIE: ZÁKAZ Markdown hviezdičiek (**text**) aj mriežok (#). Píš čistý text! Pre odrážky používaj výhradne pomlčky (-).
 
-PRAVIDLÁ ODPOVEDE:
-1. AK SA ZÁKAZNÍK PÝTA NA RAW TORTY ALEBO SI CHCE JEDNU OBJEDNAŤ:
-   - Ak sú otváracie hodiny OTVORENÉ: Potvrď, že môže zavolať na +421 910 824 923 a objednať si. Pripomeň, že RAW torty sa pripravujú čerstvé, zamrazujú sa a je potrebné ich objednať aspoň 24 hodín vopred.
-   - Ak je ZATVORENÉ: Vysvetli, že telefonické objednávky prijímate len počas otváracích hodín a uveď, kedy najbližšie otvárate.
-2. AK SA ZÁKAZNÍK PÝTA NA VARENÉ MENU / OBEDY CEZ VÍKEND:
-   - Dôrazne vysvetli, že cez víkend sa nevarí a nové týždenné menu bude pripravené až na pondelok.
-3. FORMÁTOVANIE:
-   - ZÁKAZ Markdown hviezdičiek (**text**) aj mriežok (#). Píš čistý text!
-   - Pre odrážky používaj výhradne pomlčky (-).
+KONTROLA AKTUÁLNOSTI OBEDOVÉHO MENU (KĽÚČOVÉ):
+1. STÁLA PONUKA:
+   - Stála ponuka (stále jedlá, burger, burrito, šaláty atď.) z podstránky ponuka.html platí VŽDY a môžeš ju zákazníkovi vymenovať kedykoľvek.
+2. DENNÉ/TÝŽDENNÉ MENU A PONDELOK:
+   - V dátach z webu nižšie skontroluj, či sa tam nachádza týždenné menu pre AKTUÁLNY týždeň alebo nadchádzajúci týždeň s dátumom {next_monday_date}.
+   - Ak je víkend (sobota/nedeľa) a text na webe obsahuje STARÉ dátumy z minulého týždňa, NIKDY ich nezamieňaj za ponuku na najbližší pondelok ({next_monday_date})!
+   - Ak menu pre nový týždeň s dátumom {next_monday_date} ešte nie je na webe zverejnené, zákazníkovi vysvetli, že týždenné menu na nový týždeň sa zverejňuje pred/počas pondelka, ale vymenuj mu STÁLU PONUKU, ktorú si môže dať vždy.
 
 DÁTA Z WEBU VEGNELLA:
----
+--------------------------------------------------
 {WEBSITE_DATA}
----
+--------------------------------------------------
 """
 
         full_conversation = [{"role": "system", "content": system_prompt}] + req.messages
