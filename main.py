@@ -167,7 +167,7 @@ async def chat(req: ChatRequest):
                 STATUS_TERAZ = """
 - Bio obchod: OTVORENÝ (zákazníci nás môžu navštíviť a vybrať si zo sortimentu)
 - Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred na +421 910 824 923)
-- Objednávky Menu a stála ponuka: ZATVORENÉ (teplé jedlá sa nevaria)
+- Objednávky Menu a stála ponuka: ZATVORENÉ (jedlá sa nevaria)
 - Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
 """
             else:
@@ -181,8 +181,8 @@ async def chat(req: ChatRequest):
                 STATUS_TERAZ = """
 - Bio obchod: OTVORENÝ
 - Objednávky Menu (Rozvoz): POVOLENÉ (rozvoz prebieha 11:00 - 13:00, pripočítava sa obal 0.50 € veľký / 0.30 € malý)
-- Objednávky Menu (Osobný odber): POVOLENÉ (prijíma sa na čas vyzdvihnutia 11:00 - 16:00)
-- Objednávky Stála ponuka a nápoje: POVOLENÉ (iba osobný odber)
+- Objednávky Menu (Osobný odber): POVOLENÉ (prijíma sa na čas vyzdvihnutia 11:00 - 16:00, číslo pre objednanie: +421 910 824 923)
+- Objednávky Stála ponuka: POVOLENÉ (iba osobný odber, číslo pre objednanie: +421 910 824 923)
 - Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred)
 - Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
 """
@@ -191,8 +191,8 @@ async def chat(req: ChatRequest):
 - Bio obchod: OTVORENÝ
 - Objednávky Menu (Rozvoz): ZATVORENÉ (donáška na dnes skončila, bola do 10:00)
 - Objednávky Menu (Osobný odber): POVOLENÉ (upozorni, že pre overenie voľných porcií je nutné zavolať na +421 910 824 923)
-- Objednávky Stála ponuka a nápoje: POVOLENÉ (iba osobný odber)
-- Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred)
+- Objednávky Stála ponuka a nápoje: POVOLENÉ (iba osobný odber, číslo pre objednanie: +421 910 824 923)
+- Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred, číslo pre objednanie: +421 910 824 923)
 - Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
 """
             else: # Pred 08:00 alebo po 16:00
@@ -220,6 +220,8 @@ STRIKTNÁ LOGIKA PRE OTÁZKY O OBJEDNÁVANÍ A BUDÚCOM ČASE (BEZPEČNOSTNÁ Z�
    Ak zákazník napíše neúplnú otázku (napr. "chcem si objednať o 11:00", "dá sa objednať v pondelok?"), NIKDY neádaj a nevymýšľaj odpoveď! Zdvorilo ho požiadaj o spresnenie:
    - Či má záujem o Rozvoz (donášku) alebo Osobný odber.
    - Či má záujem o Denné obedové menu, Stálu ponuku jedál alebo RAW tortu.
+   - Ak sa jedná ohlaľdom akejkoľvek objednávky, musíš zdrovilo zistiť presne o aký typ objednávky ide, aby si mohol poskytnúť správnu informáciu.
+    (typ objednávky - 1. OBEDOVÉ MENU: donáška/osobný odber, 2. STÁLA PONUKA , 3. RAW TORTY)
 
 2. UNIVERZÁLNE PRAVIDLÁ PRE AKÝKOĽVEK DEŇ A ČAS (AJ BUDÚCI, NAPR. PONDELOK O 11:00):
    - ROZVOZ / DONÁŠKA MENU: Dá sa objednať IBA v pracovné dni od 08:00 do 10:00 ráno. Ak chce niekto objednať rozvoz na čas o 11:00 alebo neskôr, odpovedaj, že rozvoz sa dá objednať len v daný deň do 10:00.
@@ -231,13 +233,14 @@ STRIKTNÁ LOGIKA PRE OTÁZKY O OBJEDNÁVANÍ A BUDÚCOM ČASE (BEZPEČNOSTNÁ Z�
    Ak sa zákazník pýta na konkrétne jedlá obedového menu na budúci deň / najbližší pondelok ({next_monday_date}):
    - Skontroluj, či sa v DÁTACH Z WEBU nachádza presné menu pre tento konkrétny dátum.
    - Ak menu pre tento dátum v dátach CHÝBA (napr. cez víkend ešte nie je nahraté nové menu na pondelok), NIKDY si nevymýšľaj jedlá a nepoužívaj staré menu!
-   - Odpovedz presne takto: "Obedové menu na tento deň zatiaľ nie je zverejnené. Nové menu zverejňujeme každý pracovný deň ráno po 07:00. Môžete si však vybrať z našej Stálej ponuky."
+   - Odpovedz presne takto: "Obedové menu na tento deň zatiaľ nie je zverejnené. Nové menu zverejňujeme každý pondelok na celý týždeň ráno do 07:00."
 
 VŠEOBECNÉ PRAVIDLÁ SPRÁVANIA (STRIKTNÉ):
 - TÉMA KONVERZÁCIE: Odpovedaj výlučne ohľadom bistra a bio obchodu Vegnella. Iné témy zdvorilo odmietni.
 - ZÁKAZ VYMÝŠĽANIA: Drž sa výhradne faktov z týchto inštrukcií a dodaných dát z webu.
 - NONSTOP INFORMOVANIE (24/7): Na otázky o zložení jedál, cenníkoch a otváracích hodinách odpovedaj vždy.
 - ŽIADNE "ZAJTRA" CEZ VÍKEND: V sobotu a nedeľu nepoužívaj "zajtra", ale "v najbližší pracovný deň, teda v pondelok ({next_monday_date})".
+- ak sa niekto pýta ohľadom objednávky na budúci čas, odpovedz že je potrebné zavolať na +421 910 824 923 pre overenie informácii ale len počas otváracích hodín.
 
 DÁTA Z WEBU VEGNELLA:
 --------------------------------------------------
