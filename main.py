@@ -60,13 +60,9 @@ def scrape_vegnella():
     print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Dáta z Vegnella.sk boli úspešne aktualizované.")
     return status_log
 
-# Správa životného cyklu aplikácie (Lifespan)
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Pri štarte servera stiahneme aktuálne dáta
     scrape_vegnella()
-    
-    # 2. Nastavíme plánovač na každý pracovný deň (Po-Pi) o 07:00 ráno
     scheduler = BackgroundScheduler(timezone="Europe/Bratislava")
     scheduler.add_job(
         scrape_vegnella, 
@@ -76,10 +72,7 @@ async def lifespan(app: FastAPI):
         minute=0
     )
     scheduler.start()
-    
-    yield  # Aplikácia beží...
-    
-    # 3. Pri vypnutí servera vypneme plánovač
+    yield
     scheduler.shutdown()
 
 app = FastAPI(lifespan=lifespan)
@@ -114,61 +107,100 @@ def refresh_data():
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     try:
-        # Ak by bola pamäť z nejakého dôvodu prázdna, poistka:
         if not WEBSITE_DATA:
             scrape_vegnella()
 
-        # Získanie presného dátumu a času na Slovensku
+        # --- EXACT TIME & DAY LOGIC (PYTHON) ---
         slovakia_tz = ZoneInfo("Europe/Bratislava")
         now = datetime.now(slovakia_tz)
-        current_time_str = now.strftime("%A, %d.%m.%Y, %H:%M hodín")
         
         dni_sk = {
             'Monday': 'Pondelok', 'Tuesday': 'Utorok', 'Wednesday': 'Streda',
             'Thursday': 'Štvrtok', 'Friday': 'Piatok', 'Saturday': 'Sobota', 'Sunday': 'Nedeľa'
         }
-        for en, sk in dni_sk.items():
-            current_time_str = current_time_str.replace(en, sk)
+        day_en = now.strftime("%A")
+        day_sk = dni_sk.get(day_en, day_en)
+        current_time_str = f"{day_sk}, {now.strftime('%d.%m.%Y %H:%M hodín')}"
+
+        hour = now.hour
+
+        # 1. NEDEĽA - CELÝ DEŇ ZATVORENÉ
+        if day_en == 'Sunday':
+            STATUS_TEXT = """
+            STAV PREVÁDZKY: Dnes je NEDEĽA – bistro aj bio obchod sú ÚPLNE ZATVORENÉ!
+            - Nevarí sa denné menu ani stála ponuka jedál. Donáška ani osobný odber NIE SÚ MOŽNÉ.
+            - Zákazníkovi oznám, že najbližšie otvárate v Pondelok o 08:00 a vtedy bude pripravené aj nové denné menu.
+            - Ak sa pýta na ponuku, môžeš mu z textu ukázať sortiment alebo RAW torty, ale s dôrazom, že dnes je zatvorené.
+            """
+        # 2. SOBOTA
+        elif day_en == 'Saturday':
+            if 10 <= hour < 12:
+                STATUS_TEXT = """
+                STAV PREVÁDZKY: Dnes je SOBOTA, otvorený je LEN BIO OBCHOD (10:00 - 12:00).
+                - VŠETKO VARENIE JE ZASTAVENÉ! Nevarí sa denné menu ani stála ponuka jedál. Donáška ani odber jedál NIE SÚ MOŽNÉ.
+                - Zákazníkom oznamuj, že denné menu bude pripravené až v PONDELOK.
+                - V obchode je možné nakúpiť bio tovar a taktiež si vyzdvihnúť alebo OBJEDNAŤ RAW TORTY dopredu (po dohode na t.č. +421 910 824 923).
+                """
+            else:
+                STATUS_TEXT = """
+                STAV PREVÁDZKY: Dnes je SOBOTA, ale mimo otváracích hodín obchodu (obchod bol otvorený len 10:00 - 12:00). Aktuálne je ZATVORENÉ.
+                - Nevarí sa, denné menu pripravujeme až na Pondelok.
+                """
+        # 3. PRACOVNÉ DNI (PON - PIA)
+        else:
+            if hour < 8:
+                STATUS_TEXT = """
+                STAV PREVÁDZKY: Je pracovný deň, pred otváracími hodinami (otvárame o 08:00).
+                - Otvorené je od 08:00 do 16:00.
+                - Objednávky na DONÁŠKU spúšťame o 08:00 (do 10:00).
+                - Osobný odber bude možný od 08:00 do 16:00.
+                """
+            elif 8 <= hour < 10:
+                STATUS_TEXT = """
+                STAV PREVÁDZKY: Je pracovný deň (08:00 - 10:00 RÁNO).
+                - VŠETKO JE OTVORENÉ A DOSTUPNÉ!
+                - DONÁŠKA denného menu JE MOŽNÁ (objednávky len od 8:00 do 10:00).
+                - OSOBNÝ ODBER denného menu je možný počas celého dňa až do 16:00.
+                """
+            elif 10 <= hour < 16:
+                STATUS_TEXT = """
+                STAV PREVÁDZKY: Je pracovný deň (10:00 - 16:00).
+                - DONÁŠKA UŽ NIE JE MOŽNÁ (bola len do 10:00 ráno).
+                - OSOBNÝ ODBER DENNÉHO MENU JE MOŽNÝ do 16:00, ale zákazník si musí na t.č. +421 910 824 923 overiť, či je ešte voľná porcia!
+                - Obchod a stála ponuka v bistre sú dostupné.
+                """
+            else: # po 16:00
+                STATUS_TEXT = """
+                STAV PREVÁDZKY: Je po 16:00 hodín. ZATVORENÉ!
+                - Donáška ani osobný odber na dnes už nie sú možné. Otvárame opäť zajtra o 08:00.
+                """
 
         system_prompt = f"""
-Si oficiálny, priateľský a nápomocný AI asistent pre bistro Vegnella.
+Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
 
-AKTUÁLNY REÁLNY ČAS A DÁTUM (Slovensko):
-{current_time_str}
+AKTUÁLNY REÁLNY ČAS: {current_time_str}
 
-PRAVIDLÁ PRE DONÁŠKU A ODBER (Pondelok – Piatok):
-- Prijímanie objednávok na DONÁŠKU prebieha LEN do 10:00 hod.
-- OSOBNÝ ODBER jedla je možný do 16:00 hod.
-- Po 16:00 hod. je bistro pre daný deň ZATVORENÉ!
+==================================================
+PRÍSNE NARIADENIE STAVU PREVÁDZKY:
+{STATUS_TEXT}
+==================================================
 
-DÔLEŽITÉ INŠTRUKCIE K VÍKENDOM A ČASU:
-- Ak je SOBOTA alebo NEDEĽA a zákazník sa pýta na menu, obedy alebo chce objednať:
-  HNEĎ na začiatku ho upozorni, že cez víkend nevaríte (v sobotu je otvorený iba bio obchod a v nedeľu je zatvorené).
-  Ak na webe nájdeš ponuku, môžeš mu ju ukázať ako ukážku/stálu ponuku, ale ZDÔRAZNI, že objednávku je možné spraviť až na najbližší pracovný deň (pondelok).
+PRAVIDLÁ A PRÍSNE INŠTRUKCIE:
+1. VŽDY sa riaď sekciou STAV PREVÁDZKY vyššie!
+2. AK JE SOBOTA ALEBO NEDEĽA:
+   - DÔRAZNE oznám, že cez víkend sa nevarí (ani denné menu, ani stála ponuka jedál).
+   - Čerstvé denné menu pripravíte až od PONDELKA.
+   - V sobotu (10:00-12:00) spomeň LEN bio obchod a možnosť objednať RAW TORTY na t.č. +421 910 824 923.
+   - V nedeľu je úplne zatvorené.
+3. DONÁŠKA denného menu je možná LEN v pracovné dni od 08:00 do 10:00 ráno. Mimo tohto času donášku ODMIETNI!
+4. OSOBNÝ ODBER denného menu po 10:00 cez týždeň: Oznám, že odber je možný do 16:00, ale odporuč zavolať na +421 910 824 923 pre overenie voľných porcií.
+5. PÍŠ ČISTÝ TEXT! NIKDY nepoužívaj Markdown hviezdičky (ZÁKAZ ako **text**) ani mriežky (#). Pre odrážky používaj výhradne pomlčky (-).
+6. Odpovedaj výhradne na základe dát nižšie:
 
-- Ak je PRACOVNÝ DEŇ a aktuálny čas je PO 16:00 hod:
-  Oznám, že máte zatvorené a ponúkni predobjednávku na zajtra.
-
-- Ak je PRACOVNÝ DEŇ MEDZI 10:00 a 16:00 hod:
-  Dnešná donáška už nie je možná (bola do 10:00), ale je možný osobný odber do 16:00.
-
-PRAVIDLÁ A INŠTRUKCIE PRE ODPOVEĎ:
-1. Odpovedaj priamo, bez zbytočných omáčok.
-2. NIKDY nepoužívaj Markdown formátovanie (nepoužívaj hviezdičky ** ani # pre nadpisy), píš čisto obyčajný text.
-3. Pri zoznamoch jedál použi obyčajné pomlčky (-).
-4. Odpovedaj VÝHRADNE na základe textu nižšie:
-
-AKTUÁLNE TEXTOVÉ DÁTA ZO VŠETKÝCH PODSTRÁNOK VEGNELLA.SK:
+DÁTA Z WEBU VEGNELLA:
 ---
 {WEBSITE_DATA}
 ---
-
-PRAVIDLÁ A INŠTRUKCIE PRE ODPOVEĎ:
-1. Ak sa zákazník pýta "aké je menu", "čo máte na obed", "aké sú jedlá" a pod., HNEĎ VYPIŠ konkrétne názvy polievok, hlavných jedál alebo ponuky pre dnešný deň!
-2. NIKDY neodpovedaj len všeobecnými omáčkami typu "máme čerstvé a zdravé jedlá". Daj zákazníkovi PRIAMO zoznam jedál z textu!
-3. Odpovedaj VÝHRADNE na základe textu vyššie. Ak konkrétne informácie v texte chýbajú, zdvorilo to priznaj a nehalucinuj.
-4. Pri bežných pozdravoch alebo odpovediach typu "ok", "vďaka" odpovedaj krátko a zdvorilo.
-5. Odpovedaj stále priamo a stručne, bez zbytočných omáčok. Ak je otázka zložitá, rozdeľ odpoveď do odsekov.
 """
 
         full_conversation = [{"role": "system", "content": system_prompt}] + req.messages
@@ -177,7 +209,11 @@ PRAVIDLÁ A INŠTRUKCIE PRE ODPOVEĎ:
             model="gpt-4o-mini",
             messages=full_conversation
         )
+        
         reply = response.choices[0].message.content
-        return {"odpoved": reply}
+        clean_reply = reply.replace("**", "")
+        
+        return {"odpoved": clean_reply}
+        
     except Exception as e:
         return {"odpoved": f"Chyba na serveri: {str(e)}"}
