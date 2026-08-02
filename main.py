@@ -21,23 +21,20 @@ GENERAL INFO:
 Obedové menu
 Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetariánske/vegánske jedlá. Bez aditív, dochucovadiel a iných chemikálií. U nás len čistá príroda. Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu po dlhý čas.
 Príďte si k nám na kávičku alebo latté so zdravým dezertom alebo si vyberte z našej ponuky jedál.
-
 Raw Torty na objednávku
 Na rozdiel od tradičných zákuskov, naše raw torty nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Namiesto toho obsahujú iba celé, prírodné, rastlinné a nespracované zložky, ako sú orechy, semená, ovocie, superpotraviny, nerafinované sladidlá a panenské oleje. Torty dodávame na podnose zabalené v krabici.
-
 Predajňa prírodných produktov
 Nájdete u nás aj široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, drogériu a kozmetiku a veľa ďalších produktov pre zdravý život.
 
 OBEDOVÉ MENU:
-Objednávky na donášku prijímame do 10:00h. Rozvoz menu prebieha v čase 11:00h - 13:00h.
+Objednávky na donášku prijímame od 8:00h do 10:00h. Rozvoz menu prebieha v čase 11:00h - 13:00h.
 Cena MENU (hlavné jedlo + polievka) je 8,40€. Polievka samostatne 2,20€.
 ZĽAVA pri objednávke minimálne 3 MENU platíte za každé iba 7,40€. Rovnaká cena ak si predobjednáte na celý týždeň.
 Menu podávame v čase 11:00h - 13:00h alebo do vypredania.
-Jedlo si môžete aj telefonicky rezervovať alebo vám ho môžeme zabaliť a pripraviť na dohodnutý čas pre osobné vyzdvihnutie do 16:00h (0951 747 893).
-EKO obaly na obedové menu a stálu ponuku sú za príplatok 0,50€ (veľký) a 0,30€ (malý - polievka a pod.). Môžete priniesť aj svoje vlastné obaly.
+Jedlo si môžete aj telefonicky rezervovať alebo vám ho môžeme zabaliť a pripraviť na dohodnutý čas pre osobné vyzdvihnutie od 11:00h do 16:00h (0951 747 893).
+EKO obaly na obedové menu a stálu ponuku sú za príplatok 0,50€ (veľký) a 0,30€ (malý - polievka). Môžete priniesť aj svoje vlastné obaly.
 
 PONUKA STÁLYCH JEDÁL:
-Ku každému jedlu je možné pridať polievku z obedového menu za akciovú cenu 1,20€ (platí do vypredania)
 Počas obedov môže byť príprava niektorých jedál dlhšia ako obyčajne
 EKO obal na jedlo je za príplatok 0,50€
 Vegan Mac and Cheese (8,60€, 450g)
@@ -47,7 +44,7 @@ Teriyaki tofu miska (9,50€, 450g)
 Vegan Wrap (7,90€, 400g)
 Dezerty (od 2,90€)
 
-RAW TORTY:
+RAW TORTY PONUKA (na objednávku):
 Snickers (1000g | 38,00€)
 Raffaello (1000g | 36,00€)
 Jahoda (1000g | 38,00€)
@@ -156,27 +153,38 @@ async def chat(req: ChatRequest):
         next_monday_date = (now + timedelta(days=days_ahead)).strftime("%d.%m.%Y")
 
         system_prompt = f"""
-Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
-
 AKTUÁLNY REÁLNY ČAS V BRATISLAVE: {current_time_str}
 DÁTUM NAJBLIŽŠIEHO PONDELKA: {next_monday_date}
-
 FORMÁTOVANIE: ZÁKAZ Markdown hviezdičiek (**text**) aj mriežok (#). Píš čistý text! Pre odrážky používaj výhradne pomlčky (-).
 
-STRIKTNÉ PRAVIDLÁ PRE OBJEDNÁVKY (KRITICKÉ):
-1. ZÁKAZ FAKE POTVRDZOVANIA OBJEDNÁVOK: Tento chat NESLÚŽI ako priamy objednávkový systém. NIKDY nepíš "Vaša objednávka je potvrdená", "Registrujem objednávku" ani predstierať, že si objednávku zapísal!
-2. AKO REAGOVAŤ NA CHCENIE OBJEDNAŤ: Ak zákazník prejaví záujem o objednávku (obedové menu, stála ponuka, RAW torta), poskytni mu informácie o ponuke a cene a jasne ho nasmeruj, aby zavolal na naše telefónne číslo 0951 747 893 pre záväzné vytvorenie objednávky.
-3. PRAVIDLO PRE EKO OBALY: Poplatky za EKO obaly (0.50 € veľký / 0.30 € malý) sa vzťahujú VÝHRADNE na teplé jedlá a polievky (Obedové menu a Stála ponuka). Na RAW TORTY SA POPLATOK ZA EKO OBAL NEVZŤAHUJE (torty sa dodávajú na podnose v krabici)!
-4. RAW TORTY PODMIENKY: RAW tortu je nutné objednať minimálne 24 hodín vopred TELEFONICKY na čísle 0951 747 893. Osobné prevzatie je možné v pracovné dni 08:00 - 16:00 a v sobotu 10:00 - 12:00.
+Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
+
+TVOJA ÚLOHA:
+- Poskytovanie všeobecných informácií výhradne ohľadom bistra a bio obchodu Vegnella.
+  Tu je zahrnuté: adresa, otváracie hodiny, kontakt, info o ponuke jedál, info o raw tortách a predajni prírodných produktov a informácie ohľadom objednávok.
+- Zariadenie objednávok pre donášku obedového menu.
+- Akékoľvek iné činnosti striktne zakázané. 
+
+INŠTRUKCIE pre objednávky denného menu na donášku:
+- Objednávky na donášku môžeš prijať iba od 8:00h do 10:00h a iba každý pracovný deň. 
+
+Inštrukcie pre informácie ohľadom iných objednávok:
+- Najskor musíš overiť, čo chce zákazník objednať. MENU(donáška,osobne)/RAW TORTA/JEDLO Z PONUKY
+- MENU pre osobné vyzdvihnutie: možné objednať, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne len v pracovné dni v čase 8:00h - 10:00h.
+- MENU donáška: (použi osobitné informácie vyššie)
+- RAW TORTA: možné objednať, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne počas otváracích hodín aj v sobotu.
+- Jedlo zo stálej ponuky: možné objednať ale len osobné vyzdvihnutie, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne počas otváracích hodín a len v pracovné dni.
+- Ak chcú objednať mimo časového okna pre objednávky povedz, že to momentálne nieje možné. A povedz kedy najbližšie je to možné.
 
 VŠEOBECNÉ PRAVIDLÁ SPRÁVANIA:
-- Poskytovanie všeobecných informácií (otváracie hodiny, cenník, zloženie, adresa): POVOLENÉ NONSTOP (24/7).
-- TÉMA KONVERZÁCIE: Odpovedaj výlučne ohľadom bistra a bio obchodu Vegnella. Iné témy zdvorilo odmietni.
+- Dbaj na časové okná pre správne informácie. 
+- Ak sa niekto spýta na budúce menu, skontroluj dátum pri menu dátach, ak je tam staré menu, povedz, že nové menu bude k dispozícii od najbližšieho pondelka.
 - ZÁKAZ VYMÝŠĽANIA: Drž sa výhradne faktov z týchto inštrukcií a dodaných dát z webu.
-- ŽIADNE "ZAJTRA" CEZ VÍKEND: V sobotu a nedeľu nepoužívaj výraz "zajtra", ale "v najbližší pracovný deň, teda v pondelok ({next_monday_date})".
-- Ak zákazník píše/volá mimo pracovných hodín, informuj ho, že je momentálne zatvorené a telefonické objednávky prijímame počas otváracích hodín.
+- TÉMA KONVERZÁCIE: Odpovedaj výlučne ohľadom bistra a bio obchodu Vegnella. Iné témy zdvorilo odmietni.
+- Ak nevieš odpovedať, a zvážiš že by si mohol vymyslieť odpoveď, radšej povedz, že nevieš a odporuč kontaktovať priamo bistro ale iba v prípade, že zvážis že je to pre bistro relevantné a dôležité.
 
-STATICKÉ INFORMÁCIE O BISTRE (STÁLA PONUKA, TORTY, KONTAKT):
+
+STATICKÉ INFORMÁCIE O BISTRE:
 --------------------------------------------------
 {STATIC_INFO}
 --------------------------------------------------
