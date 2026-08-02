@@ -12,25 +12,108 @@ from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
 
-# Globálna premenná pre ukladanie stiahnutého obsahu z webu
-WEBSITE_DATA = ""
+# Globálna premenná výhradne pre dynamické obedové menu
+DAILY_MENU_DATA = ""
 
-# --- 1. SYNCHRÓNNA FUNKCIA NA SCRAPING ---
-def sync_scrape_vegnella():
+# --- STATICKÉ INFORMÁCIE O BISTRE (STÁLA PONUKA, RAW TORTY, KONTAKT) ---
+STATIC_INFO = """
+GENERAL INFO:
+Obedové menu
+Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetriánske/vegánske jedlá. Bez aditív, dochucovadiel a iných chemikálii. U nás len čistá príroda. Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu po dlhý čas.
+Menu na tento týždeň
+Ponuka jedál
+Prídte si k nám na kávičku alebo latté so zdravým dezertom alebo si vyberte z našej ponuky jedál.
+Pozrieť ponuku
+Raw Torty na objednávku
+Na rozdiel od tradičných zákuskov, naše raw torty nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Namiesto toho obsahujú iba celé, prírodné, rastlinné a nespracované zložky, ako sú orechy, semená, ovocie, superpotraviny, nerafinované sladidlá a panenské oleje.
+Ponuka raw toriet
+Predajňa prírodných produktov
+Nájdete u nás aj široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, drogériu a kozmetku a veľa ďalších produktov pre zdravý život. Naši experti vám s výberom radi poradia.
+Navštívte nás
+
+OBEDOVÉ MENU:
+Rezervácie na OBEDOVÉ MENU je ideálne urobiť deň vopred, alebo skoro ráno aby ste sa uistili, že pre vás ostane voľná porcia.
+Objednávky prijímame na našom tel. čísle 0951 747 893.
+Objednávky na donášku prijímame do 10:00h. Rozvoz menu prebieha v čase 11:00h - 13:00h.
+Cena MENU (hlavné jedlo + polievka) je 8,40€. Polievka samostatne 2,20€.
+ZĽAVA pri objednávke minimálne 3 MENU platíte za každé iba 7,40€. Rovnaká cena ak si predobjednáte na celý týždeň.
+Menu podávame v čase 11:00h - 13:00h alebo do vypredania.
+Jedlo si môžete aj telefonicky rezervovať alebo vám ho môžeme zabaliť a pripraviť na dohodnutý čas pre osobné vyzdvihnutie do 16:00h (0951 747 893).
+Naše EKO obaly na menu sú za príplatok 0,50€ (veľký) a 0,30€ (malý - polievka,raw torta a pod.). Môžete priniesť aj svoje vlastné obaly.
+
+PONUKA STÁLYCH JEDÁL:
+Rozvoz na jedlo z ponuky zatiaľ nerobíme, možnost objednať pre osobný odber
+Objednávky prijímame na našom tel. čísle 0951 747 893.
+Ku každému jedlu je možné pridať polievku z obedového menu za akciovú cenu 1,20€ (platí do vypredania)
+Počas obedov môže byť príprava niektorých jedál dlhšia ako obyčajne
+EKO obal na jedlo je za príplatok 0,50€
+Vegan Mac and Cheese
+8,60€450g, cestoviny s domácim veg-cheese krémom, doplnené opečenými tekvicovými semienkami (1,8) 
+Vyprážaný syr, hranolky, zelenina, dresing
+8,60€400g, klasický vyprážaný syr, zemiakové hranolky (možnosť zameniť za batátové + 1,50eur), dresing na výber kečup/brusnicový/cesnakový/tatárka (1,3) 
+Vegan burger
+8,50€350g, domáca cícerová placka, veg syr, veg mayo, BBQ (1) 
+Teriyaki tofu miska
+9,50€450g, tofu nugetky v teriyaki omáčke, zelenina, jazmínová rzža 
+Vegan Wrap
+7,90€400g, vegan proteínové kúsky, ryža, zelenina, mayo, bbq 
+Dezerty
+od 2,90€
+
+RAW TORTY:
+Objednávky na raw torty prijímame najneskôr 24h vopred (0918 914 922).
+Torty a zákusky dodávame na podnose zabalené v krabici.
+Osobné prevzatie na našej prevádzke počas pracovných hodín.
+Raw torty skladujte v chladničke (4-8°C), v uzatvorenej nádobe kde vydržia cca 4 dni alebo v mrazničke 3 mesiace.
+RAW TORTY
+Na rozdiel od tradičných zákuskov, naše raw torty nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Namiesto toho obsahujú iba celé, prírodné, rastlinné a nespracované zložky, ako sú orechy, semená, ovocie, superpotraviny, nerafinované sladidlá a panenské oleje.
+1000g    |    38,00€SnickersVlastnosti:
+vegan | bez lepku
+Zloženie:
+mandle, datle, kešu, bio kokosový cukor, kokos, raw kakao, bio kokosový olej, raw mesquite, raw karob, jemne pražené arašidy, himalájska soľ 
+Raffaello36,00 €   |   1000 gVlastnosti:
+raw | vegan | bez lepku
+Zloženie:
+mandle, kokosový krém, vanilka extrakt, datle, kešu, kokosový olej, agáve, kokos 
+Jahoda38,00 €   |   1000 gVlastnosti:
+raw | vegan | bez lepku
+Zloženie:
+bio kokosový olej, kešu, mandle, datle, raw kakao, raw čoko kúsky, agáve sirup, lyofilizované jahody, kokos 
+Slaný Karamel36,00 €   |   1000 gVlastnosti:
+raw | vegan | bez lepku
+Zloženie:
+mandle, bio kokosový olej, kešu, datle, datľový sirup, kokosový cukor, himalájska soľ, raw mesquite, kokos, raw karob, prírodný vanilkový extrakt, raw čoko kúsky 
+Čokoláda36,00 €   |   1000 gVlastnosti:
+raw | vegan | bez lepku
+Zloženie:
+kokos, kešu, bio koksový olej, mandle, ďatle, raw kakao, prírodná vanilka, raw čokoládové kúsky 
+Lemon & Matcha36,00 €   |   1000 g
+Vlastnosti:
+raw | vegan | bez lepku
+Zloženie:
+mandle, kešu, ďatle, bio kokosový olej, citrón, agáve sirup, chia semienka, matcha prášok
+
+KONTAKT A ADRESA:
+Lokalita
+Nachádzame sa v meste Vranov nad Topľou.
+Presnejšie nás nájdete za ČSOB, asi 20 metrov od hlavného chodníka.
+Otváracie hodiny
+Pondelok - Piatok: 8:00h - 16:00h
+Sobota: 10:00h - 12:00h
+Nedeľa: zatvorené
+Kontakt
+Adresa: Štúrova 99, 093 01 Vranov nad Topľou
+Mobil: 0951 747 893
+E-mail: vegnella@vegnella.sk
+"""
+
+# --- 1. TARGETING SCRAPING (LEN OBEDOVÉ MENU) ---
+def sync_scrape_menu_only():
     """
-    Stiahne textový obsah zo všetkých kľúčových podstránok Vegnella.sk.
-    Ošetruje vyrovnávaciu pamäť (cache), HTML balast a chybové stavy.
+    Stiahne výhradne text z podstránky obedy.html, kde sa nachádza aktuálne týždenné menu.
     """
-    global WEBSITE_DATA
-    urls = [
-        "https://www.vegnella.sk",
-        "https://www.vegnella.sk/obedy.html",
-        "https://www.vegnella.sk/ponuka.html",
-        "https://www.vegnella.sk/raw-torty.html",
-        "https://www.vegnella.sk/kontakt.html"
-    ]
-    combined_text = ""
-    status_log = []
+    global DAILY_MENU_DATA
+    url = "https://www.vegnella.sk/obedy.html"
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
@@ -38,52 +121,44 @@ def sync_scrape_vegnella():
         'Expires': '0'
     }
 
-    for url in urls:
-        try:
-            # Unikátny timestamp pre obídenie serverovej cache
-            fresh_url = f"{url}?_nocache={int(time.time())}"
-            response = requests.get(fresh_url, headers=headers, timeout=4, allow_redirects=True)
-            response.encoding = 'utf-8'
+    try:
+        fresh_url = f"{url}?_nocache={int(time.time())}"
+        response = requests.get(fresh_url, headers=headers, timeout=5, allow_redirects=True)
+        response.encoding = 'utf-8'
+        
+        if response.status_code == 200:
+            soup = BeautifulSoup(response.text, 'html.parser')
+            for script in soup(["script", "style"]):
+                script.extract()
             
-            if response.status_code == 200:
-                soup = BeautifulSoup(response.text, 'html.parser')
-                # Odstránenie JS kódov a CSS štýlov pre čistý text
-                for script in soup(["script", "style"]):
-                    script.extract()
-                
-                text = soup.get_text(separator='\n', strip=True)
-                if len(text) > 50:
-                    combined_text += f"\n=== OBSAH Z PODSTRÁNKY: {url} ===\n{text}\n"
-                    status_log.append(f"OK ({len(text)} znakov): {url}")
-                else:
-                    status_log.append(f"PRÁZDNE: {url}")
+            text = soup.get_text(separator='\n', strip=True)
+            if len(text) > 50:
+                DAILY_MENU_DATA = text[:4000] # Bohato stačí na týždenné menu
+                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Obedové menu bolo úspešne obnovené.")
+                return ["OK: Menu obnovené"]
             else:
-                status_log.append(f"CHYBA {response.status_code}: {url}")
-        except Exception as e:
-            status_log.append(f"ZLYHALO: {url} ({str(e)})")
-
-    if combined_text:
-        # Uloženie dát (max 20 000 znakov pre úsporu tokenov)
-        WEBSITE_DATA = combined_text[:20000]
+                print("[VAROVANIE] Stiahnutá stranka menu bola prázdna.")
+        else:
+            print(f"[CHYBA] Nepodarilo sa stiahnuť menu, status code: {response.status_code}")
+    except Exception as e:
+        print(f"[CHYBA] Zlyhal scraping menu: {str(e)}")
     
-    print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Dáta z Vegnella.sk boli úspešne obnovené.")
-    return status_log
+    return ["ZLYHALO: Menu sa nepodarilo obnoviť"]
 
-# --- 2. ASYNCHRÓNNY OBAL (NEBLOKUJE SERVER) ---
-async def async_scrape_vegnella():
-    """Deleguje blokujúci scraping do samostatného vlákna (Thread Pool)."""
-    return await asyncio.to_thread(sync_scrape_vegnella)
+# --- 2. ASYNCHRÓNNY OBAL ---
+async def async_scrape_menu():
+    return await asyncio.to_thread(sync_scrape_menu_only)
 
 # --- 3. LIFESPAN A PLÁNOVAČ (APSCHEDULER) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Prvé načítanie pri štarte aplikácie
-    await async_scrape_vegnella()
+    # Načítanie menu pri štarte servera
+    await async_scrape_menu()
     
-    # Nastavenie plánovača: každý pracovný deň o 07:00 ráno
+    # Plánovač: Každý pracovný deň o 07:00 ráno stiahne čerstvé menu
     scheduler = BackgroundScheduler(timezone="Europe/Bratislava")
     scheduler.add_job(
-        sync_scrape_vegnella, 
+        sync_scrape_menu_only, 
         trigger='cron', 
         day_of_week='mon-fri', 
         hour=7, 
@@ -93,7 +168,7 @@ async def lifespan(app: FastAPI):
     yield
     scheduler.shutdown()
 
-# --- 4. INICIALIZÁCIA FASTAPI A MIDDLEWARE ---
+# --- 4. INICIALIZÁCIA FASTAPI ---
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -112,25 +187,25 @@ class ChatRequest(BaseModel):
 # --- 5. ENDPOINTY ---
 @app.get("/")
 def home():
-    return {"status": "Vegnella AI Bot running"}
+    return {"status": "Vegnella AI Bot running (Optimized)"}
 
 @app.get("/api/refresh")
 async def refresh_data():
-    log = await async_scrape_vegnella()
+    log = await async_scrape_menu()
     return {
-        "status": "Dáta boli manuálne obnovené!",
-        "prehlad_stranok": log,
-        "celkova_dlzka": len(WEBSITE_DATA)
+        "status": "Obedové menu bolo manuálne obnovené!",
+        "log": log,
+        "dlzka_menu_textu": len(DAILY_MENU_DATA)
     }
 
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     try:
-        # Poistka pre prípad prázdnych dát
-        if not WEBSITE_DATA:
-            await async_scrape_vegnella()
+        # Poistka, ak by menu ešte nebolo stiahnuté
+        if not DAILY_MENU_DATA:
+            await async_scrape_menu()
 
-        # LOGIKA ČASU A DÁTUMU (BRATISLAVA)
+        # ČASOVÁ LOGIKA
         slovakia_tz = ZoneInfo("Europe/Bratislava")
         now = datetime.now(slovakia_tz)
         
@@ -142,7 +217,7 @@ async def chat(req: ChatRequest):
         day_sk = dni_sk.get(day_en, day_en)
         current_time_str = f"{day_sk}, {now.strftime('%d.%m.%Y %H:%M hodín')}"
 
-        # Výpočet dátumu najbližšieho pondelka
+        # Dátum najbližšieho pondelka
         days_ahead = (0 - now.weekday()) % 7
         if days_ahead == 0 and now.hour >= 16:
             days_ahead = 7
@@ -150,113 +225,63 @@ async def chat(req: ChatRequest):
             days_ahead = (7 - now.weekday()) % 7
             
         next_monday_date = (now + timedelta(days=days_ahead)).strftime("%d.%m.%Y")
-        hour = now.hour + (now.minute / 60.0)
 
-        # PRESNÉ ČASOVÉ ÚSEKY PRE AKTUÁLNY MOMENT (PLATÍ LEN AK SA ZÁKAZNÍK PÝTA NA "TERAZ")
-        if day_en == 'Sunday':
-            STATUS_TERAZ = """
-- Bio obchod: ZATVORENÝ
-- Objednávky Menu (Rozvoz): ZATVORENÉ
-- Objednávky Menu (Osobný odber): ZATVORENÉ
-- Objednávky Stála ponuka / Nápoje: ZATVORENÉ
-- Objednávky RAW torty: ZATVORENÉ
-- Poskytovanie všeobecných informácií (menu, zloženie, otváracie hodiny): POVOLENÉ NONSTOP
-"""
-        elif day_en == 'Saturday':
-            if 10 <= hour < 12:
-                STATUS_TERAZ = """
-- Bio obchod: OTVORENÝ (zákazníci nás môžu navštíviť a vybrať si zo sortimentu)
-- Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred na +421 910 824 923)
-- Objednávky Menu a stála ponuka: ZATVORENÉ (jedlá sa nevaria)
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
-"""
-            else:
-                STATUS_TERAZ = """
-- Bio obchod: ZATVORENÝ (bol otvorený 10:00 - 12:00)
-- Akékoľvek objednávky: ZATVORENÉ
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
-"""
-        else: # Pracovné dni (Pondelok až Piatok)
-            if 8 <= hour < 10:
-                STATUS_TERAZ = """
-- Bio obchod: OTVORENÝ
-- Objednávky Menu (Rozvoz): POVOLENÉ (rozvoz prebieha 11:00 - 13:00, pripočítava sa obal 0.50 € veľký / 0.30 € malý)
-- Objednávky Menu (Osobný odber): POVOLENÉ (prijíma sa na čas vyzdvihnutia 11:00 - 16:00, číslo pre objednanie: +421 910 824 923)
-- Objednávky Stála ponuka: POVOLENÉ (iba osobný odber, číslo pre objednanie: +421 910 824 923)
-- Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred)
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
-"""
-            elif 10 <= hour < 16:
-                STATUS_TERAZ = """
-- Bio obchod: OTVORENÝ
-- Objednávky Menu (Rozvoz): ZATVORENÉ (donáška na dnes skončila, bola do 10:00)
-- Objednávky Menu (Osobný odber): POVOLENÉ (upozorni, že pre overenie voľných porcií je nutné zavolať na +421 910 824 923)
-- Objednávky Stála ponuka a nápoje: POVOLENÉ (iba osobný odber, číslo pre objednanie: +421 910 824 923)
-- Objednávky RAW torty: POVOLENÉ (osobný odber, min. 24h vopred, číslo pre objednanie: +421 910 824 923)
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
-"""
-            else: # Pred 08:00 alebo po 16:00
-                STATUS_TERAZ = """
-- Bio obchod: ZATVORENÝ
-- Akékoľvek objednávky na dnes: ZATVORENÉ
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
-"""
-
-        # SYSTEM PROMPT S OCHRANNÝMI ZÁPLATAMI PRE BUDÚCI ČAS
+        # ČISTÝ PROMPT
         system_prompt = f"""
 Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
 
 AKTUÁLNY REÁLNY ČAS V BRATISLAVE: {current_time_str}
 DÁTUM NAJBLIŽŠIEHO PONDELKA: {next_monday_date}
 
-AKTUÁLNE POVOLENÉ A ZAKÁZANÉ ČINNOSTI PRE TÚTO CHVÍĽU (AK SA ZÁKAZNÍK PÝTA NA TERAZ):
-{STATUS_TERAZ}
-
 FORMÁTOVANIE: ZÁKAZ Markdown hviezdičiek (**text**) aj mriežok (#). Píš čistý text! Pre odrážky používaj výhradne pomlčky (-).
 
 VŠEOBECNÉ PRAVIDLÁ SPRÁVANIA (STRIKTNÉ):
-- Poskytovanie všeobecných informácií: POVOLENÉ NONSTOP
-- Pri každej objednávke typu osobný odber sa spýtaj, či zákazník chce jedlo zabaliť do našich obalov alebo bude jesť u priamo u nás. Ak chce zabaliť, upozorni ho na poplatok za obal (0.50 € veľký (všetke jedlá) / 0.30 € malý (polievky/dezerty)).
-- Pri každej objednávke typu rozvoz upozorni zákazníka, že sa účtuje poplatok za obaly (0.50 € veľký (všetke jedlá) / 0.30 € malý (polievky/dezerty)).
+- Poskytovanie všeobecných informácií (otváracie hodiny, cenník, zloženie, adresa): POVOLENÉ NONSTOP (24/7).
+- Pri každej objednávke typu osobný odber sa spýtaj, či zákazník chce jedlo zabaliť do našich obalov alebo bude jesť priamo u nás. Ak chce zabaliť, upozorni ho na poplatok za obal (0.50 € veľký pre všetky jedlá / 0.30 € malý pre polievky a dezerty).
+- Pri každej objednávke typu rozvoz upozorni zákazníka, že sa účtuje poplatok za obaly (0.50 € veľký / 0.30 € malý).
 - TÉMA KONVERZÁCIE: Odpovedaj výlučne ohľadom bistra a bio obchodu Vegnella. Iné témy zdvorilo odmietni.
 - ZÁKAZ VYMÝŠĽANIA: Drž sa výhradne faktov z týchto inštrukcií a dodaných dát z webu.
-- NONSTOP INFORMOVANIE (24/7): Na otázky o zložení jedál, cenníkoch a otváracích hodinách odpovedaj vždy.
-- ŽIADNE "ZAJTRA" CEZ VÍKEND: V sobotu a nedeľu nepoužívaj "zajtra", ale "v najbližší pracovný deň, teda v pondelok ({next_monday_date})".
+- ŽIADNE "ZAJTRA" CEZ VÍKEND: V sobotu a nedeľu nepoužívaj výraz "zajtra", ale "v najbližší pracovný deň, teda v pondelok ({next_monday_date})".
+- Neposkytuj informácie ohľadom denného menu bez toho aby si skontroloval dátum v dátach z webu a správne pripradil menu k určitému dňu podľa dátumu pre ktorý sa zákazník pýta. 
+- Napr. ak sa zákazník pýta na menu na pondelok, skontroluj dátum pondelka a vyber správne menu z dát z webu. Ak menu pre tento dátum v dátach chýba, odpovedz presne: "Obedové menu na tento deň zatiaľ nie je zverejnené. Nové menu zverejňujeme každý pondelok na celý týždeň ráno do 07:00."
 
-Typy objednávky: 
-1. OBEDOVÉ MENU: donáška/osobný odber na určitý čas v bistre
-2. STÁLA PONUKA: objednávka na určitý čas v bistre 
-3. RAW TORTY: objednávka na určitý čas v bistre (min. 24h vopred)
-(na základe typu objednávky zákazníkovi poskytnúť správnu informáciu podľa univerzálnych pravidiel)
+URČENIE ČASU OTÁZKY:
+- Ak zákazník v otázke NEUVIEDOL konkrétny deň ani čas, AUTOMATICKY vyhodnocuj pravidlá pre AKTUÁLNY ČAS ({current_time_str}).
+- Ak zákazník UVIEDOL konkrétny deň alebo čas (napr. "v utorok o 10:00"), vyhodnoť pravidlá pre ním zadaný čas.
+
+TYPY OBJEDNÁVOK:
+1. OBEDOVÉ MENU (Donáška / Osobný odber na určitý čas)
+2. STÁLA PONUKA (Osobný odber na určitý čas)
+3. RAW TORTY (Osobný odber, min. 24h vopred)
 
 1. VYJASNENIE NEJASNÝCH OTÁZOK:
-   Ak zákazník napíše neúplnú otázku (napr. "chcem si objednať o 11:00", "dá sa objednať v pondelok?" alebo sa jedná ohľadom akejkoľvek objednávky), NIKDY neádaj a nevymýšľaj odpoveď! Zdvorilo ho požiadaj o spresnenie typu objednávky a času. 
-   Vždy ak sa jedná o objednávku a zákazník neuviedol presný typ objednávky (a ak sa nejedná ohľadom súčasného času tak zisti aj čas), pýtaj sa na presný typ objednávky a podľa toho mu poskytnúť správnu informáciu podľa univerzálnych pravidiel.
-   Nikdy neodpovedaj na otázky o objednávkach, ak zákazník neuviedol presný typ objednávky. Vždy sa pýtaj na spresnenie. A potom až podľa toho poskytni odpoveď podľa univerzálnych pravidiel.
-   Okrem objednávky je možné jedlo z menu alebo zo stálej ponuky zakúpiť aj osobne priamo v bistre, podľa univerzálnych pravidiel. 
-   
-2. UNIVERZÁLNE PRAVIDLÁ PRE AKÝKOĽVEK DEŇ A ČAS (AJ BUDÚCI, NAPR. PONDELOK O 11:00):
-   - MENU ROZVOZ / DONÁŠKA OBJEDNÁVKA: Dá sa objednať IBA v pracovné dni od 08:00 do 10:00 ráno. Ak chce niekto objednať rozvoz na čas o 11:00 alebo neskôr, odpovedaj, že rozvoz sa dá objednať len v daný deň do 10:00.
-   - MENU OSOBNÝ ODBER OBJEDNÁVKA: Možné od 08:00 do 16:00 na tel. čísle +421 910 824 923 (pripravíme na dhodnutý čas od 11:00 až do 16:00 v danom dni). Treba zavolať na +421 910 824 923 pre overenie dostupných porcií.
-   - MENU OSOBNÝ ODBER: Bez objednávky len v pracovné dni 11:00 - 13:00 (alebo do vypredania zásob). 
-   - STÁLA PONUKA OSOBNÝ ODBER OBJEDNÁVKA: Je možné aj objednať aby sme pripravili vopred na dohodnutý čas, možné iba v  pracovné dni 08:00 - 16:00. Volať na +421 910 824 923.
-   - STÁLA PONUKA OSOBNÝ ODBER: Bez objednávky jedlá zo stálej ponuky dostupné priamo u nás iba v pracovné dni 08:00 - 16:00.
-   - RAW TORTY: Objednávky pre osobný odber v pracovné dni 08:00 - 16:00 aj v sobotu 10:00 - 12:00. Objednávky na RAW torty je nutné robiť min. 24h vopred na +421 910 824 923.
-   - Obchod je otvorený v pracovné dni 08:00 - 16:00, v sobotu 10:00 - 12:00, v nedeľu zatvorené. Počas tohto času je možné nakupovať v obchode osobne.
-   - Sobota 10:00-12:00 len osobný nákup tovaru v našom Bio obchode a je možné objednávať RAW torty. 
-   - Nedeľa zatvorené.
-   - Cez sviatky zatvorené stále všetko a objednávky sa neprijímajú. Vždy je nutné overiť si aktuálne otváracie hodiny na webe alebo telefonicky.     
+   - Ak sa otázka týka objednávky a zákazník NEUVIEDOL presný typ objednávky (1. Obedové menu, 2. Stála ponuka, 3. RAW torty), NIKDY nehádaj odpoveď! Zdvorilo ho požiadaj o spresnenie typu objednávky (a prípadne času, ak sa nepýta na aktuálny moment).
+   - Až po spresnení typu a času objednávky poskytni informáciu podľa univerzálnych pravidiel.
+   - Okrem objednávky vopred je možné jedlo zakúpiť aj osobný nákupom priamo v bistre podľa otváracích hodín.
 
-3. OCHRAŇUJÚCE PRAVIDLO PRE MENU NA BUDÚCE DNI (ZÁKAZ HALUCINOVANIA):
+2. UNIVERZÁLNE PRAVIDLÁ PRE AKÝKOĽVEK DEŇ A ČAS:
+   - MENU ROZVOZ / DONÁŠKA: Objednávky sa prijímajú IBA v pracovné dni od 08:00 do 10:00 ráno. Ak chce niekto objednať rozvoz na neskorší čas (napr. o 11:00), vysvetli, že uzávierka objednávok na rozvoz je do 10:00 v daný deň. Rozvoz prebieha od 11:00 do 13:00.
+   - MENU OSOBNÝ ODBER (OBJEDNÁVKA VOPRED): Prijíma sa v pracovné dni od 08:00 do 16:00 na tel. +421 910 824 923 na čas vyzdvihnutia od 11:00 do 16:00. Ak zákazník vovolá/objednáva po 10:00, upozorni ho, že dostupnosť porcií je nutné overiť telefonicky.
+   - MENU OSOBNÝ ODBER (BEZ OBJEDNÁVKY): Dostupné priamo v bistre v pracovné dni 11:00 - 13:00 (alebo do vypredania zásob).
+   - STÁLA PONUKA (OSOBNÝ ODBER OBJEDNÁVKA): Možné objednať vopred na dohodnutý čas v pracovné dni 08:00 - 16:00 na tel. +421 910 824 923.
+   - STÁLA PONUKA (BEZ OBJEDNÁVKY): Jedlá dostupné priamo v bistre v pracovné dni 08:00 - 16:00.
+   - RAW TORTY: Objednávky na osobný odber v pracovné dni 08:00 - 16:00 aj v sobotu 10:00 - 12:00. Nutné objednať min. 24h vopred na tel. +421 910 824 923.
+   - BIO OBCHOD OTVÁRACIE HODINY: Pracovné dni 08:00 - 16:00, Sobota 10:00 - 12:00 (len osobný nákup a RAW torty), Nedeľa a sviatky ZATVORENÉ.
+
+3. OCHRANA PRED HALUCINOVANÍM MENU NA BUDÚCE DNI:
    Ak sa zákazník pýta na konkrétne jedlá obedového menu na budúci deň / najbližší pondelok ({next_monday_date}):
    - Skontroluj, či sa v DÁTACH Z WEBU nachádza presné menu pre tento konkrétny dátum.
-   - Ak menu pre tento dátum v dátach CHÝBA (napr. cez víkend ešte nie je nahraté nové menu na pondelok), NIKDY si nevymýšľaj jedlá a nepoužívaj staré menu!
+   - Ak menu pre tento dátum v dátach CHÝBA, NIKDY si nevymýšľaj jedlá a nepoužívaj staré menu!
    - Odpovedz presne takto: "Obedové menu na tento deň zatiaľ nie je zverejnené. Nové menu zverejňujeme každý pondelok na celý týždeň ráno do 07:00."
 
-
-DÁTA Z WEBU VEGNELLA:
+STATICKÉ INFORMÁCIE O BISTRE (STÁLA PONUKA, TORTY, KONTAKT):
 --------------------------------------------------
-{WEBSITE_DATA}
+{STATIC_INFO}
+--------------------------------------------------
+
+AKTUÁLNE STIAHNUTÉ OBEDOVÉ MENU Z WEBU:
+--------------------------------------------------
+{DAILY_MENU_DATA}
 --------------------------------------------------
 """
 
