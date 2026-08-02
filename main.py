@@ -19,16 +19,16 @@ DAILY_MENU_DATA = ""
 STATIC_INFO = """
 GENERAL INFO:
 Obedové menu
-Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetriánske/vegánske jedlá. Bez aditív, dochucovadiel a iných chemikálii. U nás len čistá príroda. Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu po dlhý čas.
+Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetariánske/vegánske jedlá. Bez aditív, dochucovadiel a iných chemikálií. U nás len čistá príroda. Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu po dlhý čas.
 Menu na tento týždeň
 Ponuka jedál
-Prídte si k nám na kávičku alebo latté so zdravým dezertom alebo si vyberte z našej ponuky jedál.
+Príďte si k nám na kávičku alebo latté so zdravým dezertom alebo si vyberte z našej ponuky jedál.
 Pozrieť ponuku
 Raw Torty na objednávku
 Na rozdiel od tradičných zákuskov, naše raw torty nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Namiesto toho obsahujú iba celé, prírodné, rastlinné a nespracované zložky, ako sú orechy, semená, ovocie, superpotraviny, nerafinované sladidlá a panenské oleje.
 Ponuka raw toriet
 Predajňa prírodných produktov
-Nájdete u nás aj široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, drogériu a kozmetku a veľa ďalších produktov pre zdravý život. Naši experti vám s výberom radi poradia.
+Nájdete u nás aj široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, drogériu a kozmetiku a veľa ďalších produktov pre zdravý život. Naši experti vám s výberom radi poradia.
 Navštívte nás
 
 OBEDOVÉ MENU:
@@ -39,24 +39,24 @@ Cena MENU (hlavné jedlo + polievka) je 8,40€. Polievka samostatne 2,20€.
 ZĽAVA pri objednávke minimálne 3 MENU platíte za každé iba 7,40€. Rovnaká cena ak si predobjednáte na celý týždeň.
 Menu podávame v čase 11:00h - 13:00h alebo do vypredania.
 Jedlo si môžete aj telefonicky rezervovať alebo vám ho môžeme zabaliť a pripraviť na dohodnutý čas pre osobné vyzdvihnutie do 16:00h (0951 747 893).
-Naše EKO obaly na menu sú za príplatok 0,50€ (veľký) a 0,30€ (malý - polievka,raw torta a pod.). Môžete priniesť aj svoje vlastné obaly.
+Naše EKO obaly na menu sú za príplatok 0,50€ (veľký) a 0,30€ (malý - polievka, raw torta a pod.). Môžete priniesť aj svoje vlastné obaly.
 
 PONUKA STÁLYCH JEDÁL:
-Rozvoz na jedlo z ponuky zatiaľ nerobíme, možnost objednať pre osobný odber
+Rozvoz na jedlo z ponuky zatiaľ nerobíme, možnosť objednať pre osobný odber
 Objednávky prijímame na našom tel. čísle 0951 747 893.
 Ku každému jedlu je možné pridať polievku z obedového menu za akciovú cenu 1,20€ (platí do vypredania)
 Počas obedov môže byť príprava niektorých jedál dlhšia ako obyčajne
 EKO obal na jedlo je za príplatok 0,50€
 Vegan Mac and Cheese
-8,60€450g, cestoviny s domácim veg-cheese krémom, doplnené opečenými tekvicovými semienkami (1,8) 
+8,60€ 450g, cestoviny s domácim veg-cheese krémom, doplnené opečenými tekvicovými semienkami (1,8) 
 Vyprážaný syr, hranolky, zelenina, dresing
-8,60€400g, klasický vyprážaný syr, zemiakové hranolky (možnosť zameniť za batátové + 1,50eur), dresing na výber kečup/brusnicový/cesnakový/tatárka (1,3) 
+8,60€ 400g, klasický vyprážaný syr, zemiakové hranolky (možnosť zameniť za batátové + 1,50eur), dresing na výber kečup/brusnicový/cesnakový/tatárka (1,3) 
 Vegan burger
-8,50€350g, domáca cícerová placka, veg syr, veg mayo, BBQ (1) 
+8,50€ 350g, domáca cícerová placka, veg syr, veg mayo, BBQ (1) 
 Teriyaki tofu miska
-9,50€450g, tofu nugetky v teriyaki omáčke, zelenina, jazmínová rzža 
+9,50€ 450g, tofu nugetky v teriyaki omáčke, zelenina, jazmínová ryža 
 Vegan Wrap
-7,90€400g, vegan proteínové kúsky, ryža, zelenina, mayo, bbq 
+7,90€ 400g, vegan proteínové kúsky, ryža, zelenina, mayo, bbq 
 Dezerty
 od 2,90€
 
@@ -67,31 +67,12 @@ Osobné prevzatie na našej prevádzke počas pracovných hodín.
 Raw torty skladujte v chladničke (4-8°C), v uzatvorenej nádobe kde vydržia cca 4 dni alebo v mrazničke 3 mesiace.
 RAW TORTY
 Na rozdiel od tradičných zákuskov, naše raw torty nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Namiesto toho obsahujú iba celé, prírodné, rastlinné a nespracované zložky, ako sú orechy, semená, ovocie, superpotraviny, nerafinované sladidlá a panenské oleje.
-1000g    |    38,00€SnickersVlastnosti:
-vegan | bez lepku
-Zloženie:
-mandle, datle, kešu, bio kokosový cukor, kokos, raw kakao, bio kokosový olej, raw mesquite, raw karob, jemne pražené arašidy, himalájska soľ 
-Raffaello36,00 €   |   1000 gVlastnosti:
-raw | vegan | bez lepku
-Zloženie:
-mandle, kokosový krém, vanilka extrakt, datle, kešu, kokosový olej, agáve, kokos 
-Jahoda38,00 €   |   1000 gVlastnosti:
-raw | vegan | bez lepku
-Zloženie:
-bio kokosový olej, kešu, mandle, datle, raw kakao, raw čoko kúsky, agáve sirup, lyofilizované jahody, kokos 
-Slaný Karamel36,00 €   |   1000 gVlastnosti:
-raw | vegan | bez lepku
-Zloženie:
-mandle, bio kokosový olej, kešu, datle, datľový sirup, kokosový cukor, himalájska soľ, raw mesquite, kokos, raw karob, prírodný vanilkový extrakt, raw čoko kúsky 
-Čokoláda36,00 €   |   1000 gVlastnosti:
-raw | vegan | bez lepku
-Zloženie:
-kokos, kešu, bio koksový olej, mandle, ďatle, raw kakao, prírodná vanilka, raw čokoládové kúsky 
-Lemon & Matcha36,00 €   |   1000 g
-Vlastnosti:
-raw | vegan | bez lepku
-Zloženie:
-mandle, kešu, ďatle, bio kokosový olej, citrón, agáve sirup, chia semienka, matcha prášok
+1000g    |    38,00€ Snickers Vlastnosti: vegan | bez lepku. Zloženie: mandle, datle, kešu, bio kokosový cukor, kokos, raw kakao, bio kokosový olej, raw mesquite, raw karob, jemne pražené arašidy, himalájska soľ 
+Raffaello 36,00 € | 1000 g Vlastnosti: raw | vegan | bez lepku. Zloženie: mandle, kokosový krém, vanilka extrakt, datle, kešu, kokosový olej, agáve, kokos 
+Jahoda 38,00 € | 1000 g Vlastnosti: raw | vegan | bez lepku. Zloženie: bio kokosový olej, kešu, mandle, datle, raw kakao, raw čoko kúsky, agáve sirup, lyofilizované jahody, kokos 
+Slaný Karamel 36,00 € | 1000 g Vlastnosti: raw | vegan | bez lepku. Zloženie: mandle, bio kokosový olej, kešu, datle, datľový sirup, kokosový cukor, himalájska soľ, raw mesquite, kokos, raw karob, prírodný vanilkový extrakt, raw čoko kúsky 
+Čokoláda 36,00 € | 1000 g Vlastnosti: raw | vegan | bez lepku. Zloženie: kokos, kešu, bio kokosový olej, mandle, datle, raw kakao, prírodná vanilka, raw čokoládové kúsky 
+Lemon & Matcha 36,00 € | 1000 g Vlastnosti: raw | vegan | bez lepku. Zloženie: mandle, kešu, datle, bio kokosový olej, citrón, agáve sirup, chia semienka, matcha prášok
 
 KONTAKT A ADRESA:
 Lokalita
@@ -103,7 +84,8 @@ Sobota: 10:00h - 12:00h
 Nedeľa: zatvorené
 Kontakt
 Adresa: Štúrova 99, 093 01 Vranov nad Topľou
-Mobil: 0951 747 893
+Mobil (Obedové menu / Stála ponuka / Všeobecný kontakt): 0951 747 893
+Mobil (RAW torty): 0918 914 922
 E-mail: vegnella@vegnella.sk
 """
 
@@ -173,7 +155,7 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://www.vegnella.sk", "https://vegnella.sk", "*"],
+    allow_origins=["https://www.vegnella.sk", "https://vegnella.sk"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -242,8 +224,6 @@ VŠEOBECNÉ PRAVIDLÁ SPRÁVANIA (STRIKTNÉ):
 - TÉMA KONVERZÁCIE: Odpovedaj výlučne ohľadom bistra a bio obchodu Vegnella. Iné témy zdvorilo odmietni.
 - ZÁKAZ VYMÝŠĽANIA: Drž sa výhradne faktov z týchto inštrukcií a dodaných dát z webu.
 - ŽIADNE "ZAJTRA" CEZ VÍKEND: V sobotu a nedeľu nepoužívaj výraz "zajtra", ale "v najbližší pracovný deň, teda v pondelok ({next_monday_date})".
-- Neposkytuj informácie ohľadom denného menu bez toho aby si skontroloval dátum v dátach z webu a správne pripradil menu k určitému dňu podľa dátumu pre ktorý sa zákazník pýta. 
-- Napr. ak sa zákazník pýta na menu na pondelok, skontroluj dátum pondelka a vyber správne menu z dát z webu. Ak menu pre tento dátum v dátach chýba, odpovedz presne: "Obedové menu na tento deň zatiaľ nie je zverejnené. Nové menu zverejňujeme každý pondelok na celý týždeň ráno do 07:00."
 
 URČENIE ČASU OTÁZKY:
 - Ak zákazník v otázke NEUVIEDOL konkrétny deň ani čas, AUTOMATICKY vyhodnocuj pravidlá pre AKTUÁLNY ČAS ({current_time_str}).
@@ -257,20 +237,20 @@ TYPY OBJEDNÁVOK:
 1. VYJASNENIE NEJASNÝCH OTÁZOK:
    - Ak sa otázka týka objednávky a zákazník NEUVIEDOL presný typ objednávky (1. Obedové menu, 2. Stála ponuka, 3. RAW torty), NIKDY nehádaj odpoveď! Zdvorilo ho požiadaj o spresnenie typu objednávky (a prípadne času, ak sa nepýta na aktuálny moment).
    - Až po spresnení typu a času objednávky poskytni informáciu podľa univerzálnych pravidiel.
-   - Okrem objednávky vopred je možné jedlo zakúpiť aj osobný nákupom priamo v bistre podľa otváracích hodín.
+   - Okrem objednávky vopred je možné jedlo zakúpiť aj osobným nákupom priamo v bistre podľa otváracích hodín.
 
 2. UNIVERZÁLNE PRAVIDLÁ PRE AKÝKOĽVEK DEŇ A ČAS:
-   - MENU ROZVOZ / DONÁŠKA: Objednávky sa prijímajú IBA v pracovné dni od 08:00 do 10:00 ráno. Ak chce niekto objednať rozvoz na neskorší čas (napr. o 11:00), vysvetli, že uzávierka objednávok na rozvoz je do 10:00 v daný deň. Rozvoz prebieha od 11:00 do 13:00.
-   - MENU OSOBNÝ ODBER (OBJEDNÁVKA VOPRED): Prijíma sa v pracovné dni od 08:00 do 16:00 na tel. +421 910 824 923 na čas vyzdvihnutia od 11:00 do 16:00. Ak zákazník vovolá/objednáva po 10:00, upozorni ho, že dostupnosť porcií je nutné overiť telefonicky.
+   - MENU ROZVOZ / DONÁŠKA: Objednávky sa prijímajú IBA v pracovné dni od 08:00 do 10:00 ráno na tel. 0951 747 893. Ak chce niekto objednať rozvoz na neskorší čas (napr. o 11:00), vysvetli, že uzávierka objednávok na rozvoz je do 10:00 v daný deň. Rozvoz prebieha od 11:00 do 13:00.
+   - MENU OSOBNÝ ODBER (OBJEDNÁVKA VOPRED): Prijíma sa v pracovné dni od 08:00 do 16:00 na tel. 0951 747 893 na čas vyzdvihnutia od 11:00 do 16:00. Ak zákazník volá/objednáva po 10:00, upozorni ho, že dostupnosť porcií je nutné overiť telefonicky.
    - MENU OSOBNÝ ODBER (BEZ OBJEDNÁVKY): Dostupné priamo v bistre v pracovné dni 11:00 - 13:00 (alebo do vypredania zásob).
-   - STÁLA PONUKA (OSOBNÝ ODBER OBJEDNÁVKA): Možné objednať vopred na dohodnutý čas v pracovné dni 08:00 - 16:00 na tel. +421 910 824 923.
+   - STÁLA PONUKA (OSOBNÝ ODBER OBJEDNÁVKA): Možné objednať vopred na dohodnutý čas v pracovné dni 08:00 - 16:00 na tel. 0951 747 893.
    - STÁLA PONUKA (BEZ OBJEDNÁVKY): Jedlá dostupné priamo v bistre v pracovné dni 08:00 - 16:00.
-   - RAW TORTY: Objednávky na osobný odber v pracovné dni 08:00 - 16:00 aj v sobotu 10:00 - 12:00. Nutné objednať min. 24h vopred na tel. +421 910 824 923.
+   - RAW TORTY: Osobný odber v pracovné dni 08:00 - 16:00 aj v sobotu 10:00 - 12:00. Nutné objednať min. 24h vopred na tel. 0918 914 922.
    - BIO OBCHOD OTVÁRACIE HODINY: Pracovné dni 08:00 - 16:00, Sobota 10:00 - 12:00 (len osobný nákup a RAW torty), Nedeľa a sviatky ZATVORENÉ.
 
 3. OCHRANA PRED HALUCINOVANÍM MENU NA BUDÚCE DNI:
    Ak sa zákazník pýta na konkrétne jedlá obedového menu na budúci deň / najbližší pondelok ({next_monday_date}):
-   - Skontroluj, či sa v DÁTACH Z WEBU nachádza presné menu pre tento konkrétny dátum.
+   - Skontroluj, či sa v DÁTACH OBEDOVÉHO MENU nachádza presné menu pre tento konkrétny dátum.
    - Ak menu pre tento dátum v dátach CHÝBA, NIKDY si nevymýšľaj jedlá a nepoužívaj staré menu!
    - Odpovedz presne takto: "Obedové menu na tento deň zatiaľ nie je zverejnené. Nové menu zverejňujeme každý pondelok na celý týždeň ráno do 07:00."
 
