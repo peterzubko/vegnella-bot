@@ -20,20 +20,13 @@ STATIC_INFO = """
 GENERAL INFO:
 Obedové menu
 Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetariánske/vegánske jedlá. Bez aditív, dochucovadiel a iných chemikálií. U nás len čistá príroda. Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu po dlhý čas.
-Menu na tento týždeň
-Ponuka jedál
 Príďte si k nám na kávičku alebo latté so zdravým dezertom alebo si vyberte z našej ponuky jedál.
-Pozrieť ponuku
 Raw Torty na objednávku
 Na rozdiel od tradičných zákuskov, naše raw torty nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Namiesto toho obsahujú iba celé, prírodné, rastlinné a nespracované zložky, ako sú orechy, semená, ovocie, superpotraviny, nerafinované sladidlá a panenské oleje.
-Ponuka raw toriet
 Predajňa prírodných produktov
 Nájdete u nás aj široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, drogériu a kozmetiku a veľa ďalších produktov pre zdravý život. Naši experti vám s výberom radi poradia.
-Navštívte nás
 
 OBEDOVÉ MENU:
-Rezervácie na OBEDOVÉ MENU je ideálne urobiť deň vopred, alebo skoro ráno aby ste sa uistili, že pre vás ostane voľná porcia.
-Objednávky prijímame na našom tel. čísle 0951 747 893.
 Objednávky na donášku prijímame do 10:00h. Rozvoz menu prebieha v čase 11:00h - 13:00h.
 Cena MENU (hlavné jedlo + polievka) je 8,40€. Polievka samostatne 2,20€.
 ZĽAVA pri objednávke minimálne 3 MENU platíte za každé iba 7,40€. Rovnaká cena ak si predobjednáte na celý týždeň.
@@ -42,8 +35,6 @@ Jedlo si môžete aj telefonicky rezervovať alebo vám ho môžeme zabaliť a p
 Naše EKO obaly na menu sú za príplatok 0,50€ (veľký) a 0,30€ (malý - polievka, raw torta a pod.). Môžete priniesť aj svoje vlastné obaly.
 
 PONUKA STÁLYCH JEDÁL:
-Rozvoz na jedlo z ponuky zatiaľ nerobíme, možnosť objednať pre osobný odber
-Objednávky prijímame na našom tel. čísle 0951 747 893.
 Ku každému jedlu je možné pridať polievku z obedového menu za akciovú cenu 1,20€ (platí do vypredania)
 Počas obedov môže byť príprava niektorých jedál dlhšia ako obyčajne
 EKO obal na jedlo je za príplatok 0,50€
@@ -61,9 +52,7 @@ Dezerty
 od 2,90€
 
 RAW TORTY:
-Objednávky na raw torty prijímame najneskôr 24h vopred (0918 914 922).
 Torty a zákusky dodávame na podnose zabalené v krabici.
-Osobné prevzatie na našej prevádzke počas pracovných hodín.
 Raw torty skladujte v chladničke (4-8°C), v uzatvorenej nádobe kde vydržia cca 4 dni alebo v mrazničke 3 mesiace.
 RAW TORTY
 Na rozdiel od tradičných zákuskov, naše raw torty nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Namiesto toho obsahujú iba celé, prírodné, rastlinné a nespracované zložky, ako sú orechy, semená, ovocie, superpotraviny, nerafinované sladidlá a panenské oleje.
@@ -85,7 +74,7 @@ Nedeľa: zatvorené
 Kontakt
 Adresa: Štúrova 99, 093 01 Vranov nad Topľou
 Mobil (Obedové menu / Stála ponuka / Všeobecný kontakt): 0951 747 893
-Mobil (RAW torty): 0918 914 922
+Mobil (RAW torty): 0951 747 893
 E-mail: vegnella@vegnella.sk
 """
 
@@ -224,6 +213,7 @@ VŠEOBECNÉ PRAVIDLÁ SPRÁVANIA (STRIKTNÉ):
 - TÉMA KONVERZÁCIE: Odpovedaj výlučne ohľadom bistra a bio obchodu Vegnella. Iné témy zdvorilo odmietni.
 - ZÁKAZ VYMÝŠĽANIA: Drž sa výhradne faktov z týchto inštrukcií a dodaných dát z webu.
 - ŽIADNE "ZAJTRA" CEZ VÍKEND: V sobotu a nedeľu nepoužívaj výraz "zajtra", ale "v najbližší pracovný deň, teda v pondelok ({next_monday_date})".
+- Neponúkaj zákazníkovi volať na naše číslo z akéhokoľvek dôvodu ak niesu práve teraz pracovné hodiny. Ak zákazník volá mimo pracovných hodín, zdvorilo ho informuj, že je momentálne zatvorené a že môže zavolať počas otváracích hodín.
 
 URČENIE ČASU OTÁZKY:
 - Ak zákazník v otázke NEUVIEDOL konkrétny deň ani čas, AUTOMATICKY vyhodnocuj pravidlá pre AKTUÁLNY ČAS ({current_time_str}).
