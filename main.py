@@ -67,7 +67,7 @@ E-mail: vegnella@vegnella.sk
 # --- POMOCNÁ FUNKCIA: ODOSLANIE E-MAILU S OBJEDNÁVKOU ---
 def send_order_email(meno: str, telefon: str, adresa: str, pocet_ks_menu: int, poznamka: str = "") -> bool:
     """
-    Odošle e-mail s detailmi objednávky na vegnella@vegnella.sk pomocou SMTP.
+    Odošle e-mail s detailmi objednávky na vegnella pomocou SMTP.
     """
     smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
@@ -80,7 +80,7 @@ def send_order_email(meno: str, telefon: str, adresa: str, pocet_ks_menu: int, p
 
     msg = MIMEMultipart()
     msg['From'] = smtp_user
-    msg['To'] = "vegnella@vegnella.sk"
+    msg['To'] = "postmaster@vegnella.sk"
     msg['Subject'] = f"Nová objednávka DONÁŠKY ({pocet_ks_menu}x Menu) - {meno}"
 
     text_poznamka = poznamka if poznamka else "Bez poznámky"
