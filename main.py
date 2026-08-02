@@ -2,6 +2,7 @@ import os
 import time
 import json
 import asyncio
+import re
 import requests
 import smtplib
 from email.mime.text import MIMEText
@@ -11,7 +12,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from openai import OpenAI
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, date
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
 from contextlib import asynccontextmanager
@@ -64,12 +65,50 @@ Mobil pre objednávky a informácie: 0951 747 893
 E-mail: vegnella@vegnella.sk
 """
 
+# --- POMOCNÁ FUNKCIA: FILTROVANIE EXPIROVANÉHO MENU V PYTHON-E ---
+def filter_expired_menu(raw_menu_text: str, current_dt: datetime) -> str:
+    """
+    Analyzuje stiahnutý text, vyrieši dátumy pomocou Regexu a ak je menu z minulosti,
+    vymaže staré jedlá, aby ich AI nemohla omylom použiť.
+    """
+    if not raw_menu_text:
+        return "Obedové menu momentálne nie je k dispozícii."
+
+    # Najdeme vsetky datumy vo formate DD.MM. alebo DD.MM.YYYY (napr. 27.7. alebo 31.07.2026)
+    matches = re.findall(r'(\d{1,2})\.\s*(\d{1,2})\.?(?:\s*(\d{4}))?', raw_menu_text)
+    if not matches:
+        return raw_menu_text
+
+    curr_year = current_dt.year
+    found_dates = []
+
+    for day_str, month_str, year_str in matches:
+        try:
+            d = int(day_str)
+            m = int(month_str)
+            y = int(year_str) if year_str else curr_year
+            if 1 <= m <= 12 and 1 <= d <= 31:
+                found_dates.append(date(y, m, d))
+        except ValueError:
+            continue
+
+    if found_dates:
+        # Najneskorší dátum nájdený v texte (typicky piatok daného menu)
+        latest_menu_date = max(found_dates)
+        
+        # Ak je najnovší dátum v menu menší ako dnešný dátum, menu je vypršané!
+        if latest_menu_date < current_dt.date():
+            print(f"[LOG] Zistené exspirované menu s dátumom {latest_menu_date}. Dnes je {current_dt.date()}. Staré menu bolo vymazané.")
+            return "AKTUÁLNE OBEDOVÉ MENU NIE JE K DISPOZÍCII (Menu na webe je z minulého týždňa a vypršalo. Nové menu zatiaľ nebolo publikované)."
+
+    return raw_menu_text
+
 # --- POMOCNÁ FUNKCIA: ODOSLANIE E-MAILU S OBJEDNÁVKOU ---
 def send_order_email(meno: str, telefon: str, adresa: str, pocet_ks_menu: int, poznamka: str = "") -> bool:
     """
-    Odošle e-mail s detailmi objednávky na vegnella pomocou SMTP.
+    Odošle e-mail s detailmi objednávky pomocou SMTP servera Forpsi.
     """
-    smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+    smtp_server = os.environ.get("SMTP_SERVER", "smtp.forpsi.com")
     smtp_port = int(os.environ.get("SMTP_PORT", 587))
     smtp_user = os.environ.get("SMTP_USER")
     smtp_password = os.environ.get("SMTP_PASSWORD")
@@ -134,7 +173,7 @@ def sync_scrape_menu_only():
             text = soup.get_text(separator='\n', strip=True)
             if len(text) > 50:
                 DAILY_MENU_DATA = text[:4000]
-                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Obedové menu obnovené.")
+                print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] Obedové menu obnovené z webu.")
                 return ["OK: Menu obnovené"]
     except Exception as e:
         print(f"[CHYBA] Scraping zlyhal: {str(e)}")
@@ -194,12 +233,12 @@ async def chat(req: ChatRequest):
         day_sk = dni_sk.get(day_en, day_en)
         current_time_str = f"{day_sk}, {now.strftime('%d.%m.%Y %H:%M hodín')}"
 
-        # Výpočet pracovného dňa a časového okna pre donášku
+        # 1. Výpočet času pre donášku
         is_workday = now.weekday() < 5  # 0=Pondelok až 4=Piatok
         is_delivery_open = is_workday and (8 <= now.hour < 10)
-        
         delivery_status_str = "OTVORENÉ (Možné prijímať objednávky na donášku)" if is_delivery_open else "ZATVORENÉ (Momentálne nie je možné objednať donášku)"
 
+        # 2. Výpočet najbližšieho pondelka
         days_ahead = (0 - now.weekday()) % 7
         if days_ahead == 0 and now.hour >= 16:
             days_ahead = 7
@@ -208,8 +247,13 @@ async def chat(req: ChatRequest):
             
         next_monday_date = (now + timedelta(days=days_ahead)).strftime("%d.%m.%Y")
 
-        # OBNOVENÝ SYSTEM PROMPT SO VŠETKÝMI TVOJIMI INŠTRUKCIAMI
+        # 3. KĽÚČOVÁ OPRAVA: Prečistenie stiahnutého menu v Pythone pred odoslaním do OpenAI!
+        cleaned_menu_data = filter_expired_menu(DAILY_MENU_DATA, now)
+
         system_prompt = f"""
+HLAVNÉ NARIADENIE PRE AI CHATBOTA:
+Pred odpoveďou na AKÚKOĽVEK otázku zákazníka si najprv VŽDY skontroluj AKTUÁLNY REÁLNY ČAS a PRESNE ODLIŠ KATEGÓRIU jedla.
+
 AKTUÁLNY REÁLNY ČAS V BRATISLAVE: {current_time_str}
 DÁTUM NAJBLIŽŠIEHO PONDELKA: {next_monday_date}
 STAV PRÍJMU OBJEDNÁVOK NA DONÁŠKU OBEDOVÉHO MENU: {delivery_status_str}
@@ -219,32 +263,34 @@ FORMÁTOVANIE: ZÁKAZ Markdown hviezdičiek (**text**) aj mriežok (#). Píš č
 Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
 
 TVOJA ÚLOHA:
-- Poskytovanie všeobecných informácií výhradne ohľadom bistra a bio obchodu Vegnella.
-  Tu je zahrnuté: info o dennom menu, adresa, otváracie hodiny, kontakt, info o ponuke jedál, info o raw tortách a predajni prírodných produktov a informácie ohľadom objednávok.
-- Zariadenie objednávok pre donášku obedového menu.
-- Akékoľvek iné činnosti striktne zakázané. 
+- Poskytovanie všeobecných informácií výhradne ohľadom bistra a bio obchodu Vegnella (denné menu, adresa, otváracie hodiny, kontakt, ponuka jedál, raw torty, bio obchod, informácie k objednávkam).
+- Vybavovanie objednávok na DONÁŠKU obedového menu VÝHRADNE v čase 8:00 - 10:00 v pracovné dni.
+- Akékoľvek iné činnosti mimo tém Vegnella sú striktne zakázané.
 
-INŠTRUKCIE pre objednávky denného menu na donášku:
-- Objednávky na donášku môžeš prijať iba v čase, kedy je STAV PRÍJMU OBJEDNÁVOK: OTVORENÉ (od 8:00h do 10:00h a iba každý pracovný deň).
-- Ak je STAV PRÍJMU OBJEDNÁVOK: ZATVORENÉ, zdvorilo vysvetli, že to momentálne nie je možné a povedz, kedy najbližšie je to možné (v najbližší pracovný deň ráno od 08:00 do 10:00).
-- Ak je STAV 'OTVORENÉ', pre úspešnú objednávku donášky musíte od zákazníka zozbierať tieto údaje:
-  a) Počet kusov obedového menu (pocet_ks_menu)
-  b) Meno a priezvisko (meno)
-  c) Adresu doručenia (adresa)
-  d) Telefónne číslo (telefon)
-  Taktiež sa spýtaj, či má zákazník nejakú voliteľnú poznámku (poznamka).
-  AKONÁHLE MÁŠ VŠETKY POVINNÉ ÚDAJE, zavolaj nástroj `odeslat_objednavku_emailom` a až po jeho úspešnom zavolaní potvrdzuj objednávku zákazníkovi!
+STRIKTNÉ PRAVIDLO PRE OBEDOVÉ MENU:
+1. Ak je v sekcii "AKTUÁLNE STIAHNUTÉ OBEDOVÉ MENU Z WEBU" uvedené, že menu vypršalo alebo nie je k dispozícii, NESMIEŠ SI ŽIADNE MENU VYMÝŠĽAŤ.
+2. V takom prípade zákazníkovi vysvetli, že aktuálne obedové menu na tento týždeň zatiaľ nie je zverejnené a nové menu bude k dispozícii od najbližšieho pondelka ({next_monday_date}).
 
-Inštrukcie pre informácie ohľadom iných objednávok:
-- Najskor musíš overiť, čo chce zákazník objednať. MENU(donáška,osobne)/RAW TORTA/JEDLO Z PONUKY
-- MENU pre osobné vyzdvihnutie: možné objednať, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne len v pracovné dni v čase 8:00h - 10:00h.
-- MENU donáška: (použi osobitné informácie vyššie)
-- RAW TORTA: možné objednať, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne počas otváracích hodín aj v sobotu (vopred min. 24h).
-- Jedlo zo stálej ponuky: možné objednať ale len osobné vyzdvihnutie, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne počas otváracích hodín a len v pracovné dni.
-- Ak chcú objednať mimo časového okna pre objednávky povedz, že to momentálne nieje možné. A povedz kedy najbližšie je to možné.
+PRAVIDLÁ PRE RÔZNE TYPY OBJEDNÁVOK:
+
+1. OBEDOVÉ MENU - DONÁŠKA (Cez chat):
+- Objednávky prijímame IBA v čase, kedy je STAV PRÍJMU OBJEDNÁVOK: OTVORENÉ (pracovné dni od 08:00 do 10:00).
+- Ak je STAV 'ZATVORENÉ', zdvorilo vysvetli, že donášku je možné objednať iba v pracovné dni ráno od 08:00 do 10:00.
+- Ak je STAV 'OTVORENÉ', zozbieraj od zákazníka: a) Počet kusov menu (pocet_ks_menu), b) Meno a priezvisko (meno), c) Adresu doručenia (adresa), d) Telefónne číslo (telefon) a opýtaj sa na voliteľnú poznámku (poznamka). Po zozbieraní zavolaj nástroj `odeslat_objednavku_emailom`.
+
+2. OBEDOVÉ MENU - OSOBNÉ VYZDVIHNUTIE (Telefonicky):
+- Možné objednať telefonicky na 0951 747 893 VÝHRADNE v pracovné dni od 08:00 do 10:00. Vyzdvihnutie prebieha od 11:00 do 16:00.
+
+3. JEDLO SO STÁLEJ PONUKY (Vegan burger, Mac and Cheese, Wrap, Tofu bowl atď. - Telefonicky):
+- Možné objednať na osobné vyzdvihnutie telefonicky na 0951 747 893 POČAS CELÝCH OTVÁRACÍCH HODÍN V PRACOVNÉ DNI (Pondelok - Piatok 08:00 - 16:00). NESPÁJAJ toto časové okno s obedovým menu (nie je obmedzené na 8:00-10:00)!
+
+4. RAW TORTY (Telefonicky):
+- Možné objednať telefonicky na 0951 747 893 počas otváracích hodín (Po-Pi 08:00-16:00, So 10:00-12:00) minimálne 24 hodín vopred.
+
+AK ZÁKAZNÍK CHCE OBJEDNAŤ MIMO DANÉHO ČASOVÉHO OKNA:
+- Povedz mu, že to momentálne nie je možné a presne uveď, kedy najbližšie je to možné pre danú kategóriu jedla.
 
 VŠEOBECNÉ PRAVIDLÁ SPRÁVANIA:
-ZÁKLADNÉ NARIADENIE PRE AI:
 - Pred odpoveďou na AKÚKOĽVEK otázku zákazníka si najprv VŽDY skontroluj AKTUÁLNY REÁLNY ČAS a porovnaj ho s dátumami v dodaných dátach. Podľa toho uplatni inštrukcie nižšie a až potom generuj odpoveď!
 - Dbaj na časové okná pre správne informácie. 
 - Ak sa niekto spýta na budúce menu, skontroluj dátum pri menu dátach, ak je tam staré menu, povedz, že nové menu bude k dispozícii od najbližšieho pondelka.
@@ -259,11 +305,10 @@ STATICKÉ INFORMÁCIE O BISTRE:
 
 AKTUÁLNE STIAHNUTÉ OBEDOVÉ MENU Z WEBU:
 --------------------------------------------------
-{DAILY_MENU_DATA}
+{cleaned_menu_data}
 --------------------------------------------------
 """
 
-        # Definícia nástrojov pre OpenAI (Function Calling)
         tools = [
             {
                 "type": "function",
@@ -297,7 +342,6 @@ AKTUÁLNE STIAHNUTÉ OBEDOVÉ MENU Z WEBU:
 
         response_message = response.choices[0].message
 
-        # Ak AI vyhodnotila, že má všetky údaje a zavolala funkciu odoslania e-mailu:
         if response_message.tool_calls:
             for tool_call in response_message.tool_calls:
                 if tool_call.function.name == "odeslat_objednavku_emailom":
