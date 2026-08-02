@@ -1,7 +1,11 @@
 import os
 import time
+import json
 import asyncio
 import requests
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from bs4 import BeautifulSoup
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -59,6 +63,52 @@ Otváracie hodiny: Po - Pi: 8:00 - 16:00, So: 10:00 - 12:00, Ne: zatvorené
 Mobil pre objednávky a informácie: 0951 747 893
 E-mail: vegnella@vegnella.sk
 """
+
+# --- POMOCNÁ FUNKCIA: ODOSLANIE E-MAILU S OBJEDNÁVKOU ---
+def send_order_email(meno: str, telefon: str, adresa: str, pocet_ks_menu: int, poznamka: str = "") -> bool:
+    """
+    Odošle e-mail s detailmi objednávky na vegnella@vegnella.sk pomocou SMTP.
+    """
+    smtp_server = os.environ.get("SMTP_SERVER", "smtp.gmail.com")
+    smtp_port = int(os.environ.get("SMTP_PORT", 587))
+    smtp_user = os.environ.get("SMTP_USER")
+    smtp_password = os.environ.get("SMTP_PASSWORD")
+
+    if not smtp_user or not smtp_password:
+        print("[ERROR] Chýbajú SMTP prihlasovacie údaje v os.environ!")
+        return False
+
+    msg = MIMEMultipart()
+    msg['From'] = smtp_user
+    msg['To'] = "vegnella@vegnella.sk"
+    msg['Subject'] = f"Nová objednávka DONÁŠKY ({pocet_ks_menu}x Menu) - {meno}"
+
+    text_poznamka = poznamka if poznamka else "Bez poznámky"
+
+    body = f"""
+    NOVÁ OBJEDNÁVKA CEZ AI CHATBOT:
+    ----------------------------------
+    Meno zákazníka: {meno}
+    Telefónne číslo: {telefon}
+    Adresa doručenia: {adresa}
+    Počet kusov menu: {pocet_ks_menu}
+    Poznámka: {text_poznamka}
+    ----------------------------------
+    Čas prijatia: {datetime.now().strftime('%d.%m.%Y %H:%M:%S')}
+    """
+    msg.attach(MIMEText(body, 'plain', 'utf-8'))
+
+    try:
+        server = smtplib.SMTP(smtp_server, smtp_port)
+        server.starttls()
+        server.login(smtp_user, smtp_password)
+        server.send_message(msg)
+        server.quit()
+        print(f"[SUCCESS] E-mail s objednávkou pre {meno} ({pocet_ks_menu}x menu) bol úspešne odoslaný.")
+        return True
+    except Exception as e:
+        print(f"[ERROR] Zlyhalo odosielanie e-mailu: {str(e)}")
+        return False
 
 # --- 1. TARGETING SCRAPING ---
 def sync_scrape_menu_only():
@@ -144,6 +194,12 @@ async def chat(req: ChatRequest):
         day_sk = dni_sk.get(day_en, day_en)
         current_time_str = f"{day_sk}, {now.strftime('%d.%m.%Y %H:%M hodín')}"
 
+        # Výpočet pracovného dňa a časového okna pre donášku
+        is_workday = now.weekday() < 5  # 0=Pondelok až 4=Piatok
+        is_delivery_open = is_workday and (8 <= now.hour < 10)
+        
+        delivery_status_str = "OTVORENÉ (Možné prijímať objednávky na donášku)" if is_delivery_open else "ZATVORENÉ (Momentálne nie je možné objednať donášku)"
+
         days_ahead = (0 - now.weekday()) % 7
         if days_ahead == 0 and now.hour >= 16:
             days_ahead = 7
@@ -152,27 +208,38 @@ async def chat(req: ChatRequest):
             
         next_monday_date = (now + timedelta(days=days_ahead)).strftime("%d.%m.%Y")
 
+        # OBNOVENÝ SYSTEM PROMPT SO VŠETKÝMI TVOJIMI INŠTRUKCIAMI
         system_prompt = f"""
 AKTUÁLNY REÁLNY ČAS V BRATISLAVE: {current_time_str}
 DÁTUM NAJBLIŽŠIEHO PONDELKA: {next_monday_date}
+STAV PRÍJMU OBJEDNÁVOK NA DONÁŠKU OBEDOVÉHO MENU: {delivery_status_str}
+
 FORMÁTOVANIE: ZÁKAZ Markdown hviezdičiek (**text**) aj mriežok (#). Píš čistý text! Pre odrážky používaj výhradne pomlčky (-).
 
 Si oficiálny, priateľský a nápomocný AI asistent pre bistro a bio obchod Vegnella.
 
 TVOJA ÚLOHA:
 - Poskytovanie všeobecných informácií výhradne ohľadom bistra a bio obchodu Vegnella.
-  Tu je zahrnuté: adresa, otváracie hodiny, kontakt, info o ponuke jedál, info o raw tortách a predajni prírodných produktov a informácie ohľadom objednávok.
+  Tu je zahrnuté: info o dennom menu, adresa, otváracie hodiny, kontakt, info o ponuke jedál, info o raw tortách a predajni prírodných produktov a informácie ohľadom objednávok.
 - Zariadenie objednávok pre donášku obedového menu.
 - Akékoľvek iné činnosti striktne zakázané. 
 
 INŠTRUKCIE pre objednávky denného menu na donášku:
-- Objednávky na donášku môžeš prijať iba od 8:00h do 10:00h a iba každý pracovný deň. 
+- Objednávky na donášku môžeš prijať iba v čase, kedy je STAV PRÍJMU OBJEDNÁVOK: OTVORENÉ (od 8:00h do 10:00h a iba každý pracovný deň).
+- Ak je STAV PRÍJMU OBJEDNÁVOK: ZATVORENÉ, zdvorilo vysvetli, že to momentálne nie je možné a povedz, kedy najbližšie je to možné (v najbližší pracovný deň ráno od 08:00 do 10:00).
+- Ak je STAV 'OTVORENÉ', pre úspešnú objednávku donášky musíte od zákazníka zozbierať tieto údaje:
+  a) Počet kusov obedového menu (pocet_ks_menu)
+  b) Meno a priezvisko (meno)
+  c) Adresu doručenia (adresa)
+  d) Telefónne číslo (telefon)
+  Taktiež sa spýtaj, či má zákazník nejakú voliteľnú poznámku (poznamka).
+  AKONÁHLE MÁŠ VŠETKY POVINNÉ ÚDAJE, zavolaj nástroj `odeslat_objednavku_emailom` a až po jeho úspešnom zavolaní potvrdzuj objednávku zákazníkovi!
 
 Inštrukcie pre informácie ohľadom iných objednávok:
 - Najskor musíš overiť, čo chce zákazník objednať. MENU(donáška,osobne)/RAW TORTA/JEDLO Z PONUKY
 - MENU pre osobné vyzdvihnutie: možné objednať, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne len v pracovné dni v čase 8:00h - 10:00h.
 - MENU donáška: (použi osobitné informácie vyššie)
-- RAW TORTA: možné objednať, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne počas otváracích hodín aj v sobotu.
+- RAW TORTA: možné objednať, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne počas otváracích hodín aj v sobotu (vopred min. 24h).
 - Jedlo zo stálej ponuky: možné objednať ale len osobné vyzdvihnutie, poskytni kontakt na telefónne číslo 0951 747 893. Ale výlučne počas otváracích hodín a len v pracovné dni.
 - Ak chcú objednať mimo časového okna pre objednávky povedz, že to momentálne nieje možné. A povedz kedy najbližšie je to možné.
 
@@ -182,7 +249,6 @@ VŠEOBECNÉ PRAVIDLÁ SPRÁVANIA:
 - ZÁKAZ VYMÝŠĽANIA: Drž sa výhradne faktov z týchto inštrukcií a dodaných dát z webu.
 - TÉMA KONVERZÁCIE: Odpovedaj výlučne ohľadom bistra a bio obchodu Vegnella. Iné témy zdvorilo odmietni.
 - Ak nevieš odpovedať, a zvážiš že by si mohol vymyslieť odpoveď, radšej povedz, že nevieš a odporuč kontaktovať priamo bistro ale iba v prípade, že zvážis že je to pre bistro relevantné a dôležité.
-
 
 STATICKÉ INFORMÁCIE O BISTRE:
 --------------------------------------------------
@@ -195,19 +261,73 @@ AKTUÁLNE STIAHNUTÉ OBEDOVÉ MENU Z WEBU:
 --------------------------------------------------
 """
 
+        # Definícia nástrojov pre OpenAI (Function Calling)
+        tools = [
+            {
+                "type": "function",
+                "function": {
+                    "name": "odeslat_objednavku_emailom",
+                    "description": "Odošle potvrdenú objednávku donášky obedového menu na e-mail bistra.",
+                    "parameters": {
+                        "type": "object",
+                        "properties": {
+                            "meno": {"type": "string", "description": "Meno a priezvisko zákazníka"},
+                            "telefon": {"type": "string", "description": "Telefónne číslo zákazníka"},
+                            "adresa": {"type": "string", "description": "Adresa doručenia"},
+                            "pocet_ks_menu": {"type": "integer", "description": "Počet kusov obedového menu"},
+                            "poznamka": {"type": "string", "description": "Voliteľná poznámka k objednávke (napr. poschodie, bez cibule)"}
+                        },
+                        "required": ["meno", "telefon", "adresa", "pocet_ks_menu"]
+                    }
+                }
+            }
+        ]
+
         full_conversation = [{"role": "system", "content": system_prompt}] + req.messages
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=full_conversation,
+            tools=tools,
+            tool_choice="auto",
             timeout=10.0
         )
-        
-        reply = response.choices[0].message.content or ""
+
+        response_message = response.choices[0].message
+
+        # Ak AI vyhodnotila, že má všetky údaje a zavolala funkciu odoslania e-mailu:
+        if response_message.tool_calls:
+            for tool_call in response_message.tool_calls:
+                if tool_call.function.name == "odeslat_objednavku_emailom":
+                    args = json.loads(tool_call.function.arguments)
+                    
+                    email_success = send_order_email(
+                        meno=args.get("meno"),
+                        telefon=args.get("telefon"),
+                        adresa=args.get("adresa"),
+                        pocet_ks_menu=args.get("pocet_ks_menu"),
+                        poznamka=args.get("poznamka", "")
+                    )
+
+                    full_conversation.append(response_message)
+                    full_conversation.append({
+                        "role": "tool",
+                        "tool_call_id": tool_call.id,
+                        "content": json.dumps({"status": "SUCCESS" if email_success else "FAILED"})
+                    })
+
+                    second_response = client.chat.completions.create(
+                        model="gpt-4o-mini",
+                        messages=full_conversation
+                    )
+                    reply = second_response.choices[0].message.content or ""
+                    clean_reply = reply.replace("**", "")
+                    return {"odpoved": clean_reply}
+
+        reply = response_message.content or ""
         clean_reply = reply.replace("**", "")
-        
         return {"odpoved": clean_reply}
-        
+
     except Exception as e:
         print(f"[ERROR] Chyba pri spracovaní chatu: {str(e)}")
         return {"odpoved": "Ospravedlňujem sa, momentálne pripojenie trvá dlhšie ako zvyčajne. Skúste prosím otázku zopakovať."}
