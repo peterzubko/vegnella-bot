@@ -285,7 +285,7 @@ PRAVIDLÁ PRE RÔZNE TYPY OBJEDNÁVOK:
 - Možné objednať na osobné vyzdvihnutie telefonicky na 0951 747 893 POČAS CELÝCH OTVÁRACÍCH HODÍN V PRACOVNÉ DNI (Pondelok - Piatok 08:00 - 16:00). NESPÁJAJ toto časové okno s obedovým menu (nie je obmedzené na 8:00-10:00)!
 
 4. RAW TORTY (Telefonicky):
-- Možné objednať telefonicky na 0951 747 893 počas otváracích hodín (Po-Pi 08:00-16:00, So 10:00-12:00) minimálne 24 hodín vopred.
+- Možné objednať telefonicky na 0951 747 893 počas otváracích hodín (Po-Pi 08:00-16:00, So 10:00-12:00) tortu dodáme najskôr do 24 hodín od najbližšieho pracovného dňa.
 
 AK ZÁKAZNÍK CHCE OBJEDNAŤ MIMO DANÉHO ČASOVÉHO OKNA:
 - Povedz mu, že to momentálne nie je možné a presne uveď, kedy najbližšie je to možné pre danú kategóriu jedla.
