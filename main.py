@@ -51,10 +51,8 @@ async def async_scrape_menu():
 # --- 2. ČASOVAČ (LIFESPAN): SPUSTENIE O 7:00 RÁNO ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Pri štarte aplikácie hneď stiahne menu
     await async_scrape_menu()
     
-    # Nastavenie plánovača na 07:00 ráno v pracovné dni
     scheduler = BackgroundScheduler(timezone="Europe/Bratislava")
     scheduler.add_job(sync_scrape_menu_only, trigger='cron', day_of_week='mon-fri', hour=7, minute=0)
     scheduler.start()
@@ -78,13 +76,8 @@ client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 class ChatRequest(BaseModel):
     messages: list
 
-# --- 4. TAJNÉ VOLANIE: ZISTENIE HESLA S KONTEXTOM (MENU / OBJEDNAVKA / INE) ---
+# --- 4. TAJNÉ VOLANIE: ZISTENIE HESLA S KONTEXTOM ---
 def zisti_tajne_heslo(messages_history: list) -> str:
-    """
-    Analyzuje posledné správy z chatu, aby tajná AI poznala kontext
-    a správne zaradila aj nadväzujúce skrátené otázky.
-    """
-    # Vyberieme posledných max 6 správ (3 otázky + 3 odpovede)
     recent_messages = messages_history[-6:]
     
     konverzacia_text = ""
@@ -128,65 +121,73 @@ async def refresh_data():
 @app.post("/api/chat")
 async def chat(req: ChatRequest):
     try:
-        # Ak menu ešte nie je stiahnuté, stiahne ho
         if not DAILY_MENU_DATA:
             await async_scrape_menu()
 
-        # Aktuálny reálny čas v SR
+        # Jednorazové zistenie aktuálneho času na začiatku
         slovakia_tz = ZoneInfo("Europe/Bratislava")
         now = datetime.now(slovakia_tz)
+        cas_str = now.strftime('%A, %d.%m.%Y %H:%M hodín')
 
-        # KROK A: Tajné zistenie hesla cez AI s celým kontextom
+        # -----------------------------------------------------------------
+        # VŠEOBECNÉ PRAVIDLÁ PRE VŠETKY VETVY (Základný rámec)
+        # -----------------------------------------------------------------
+        base_prompt = f"""
+        Si oficiálny, priateľský a profesionálny AI asistent pre bistro Vegnella.
+        AKTUÁLNY REÁLNY ČAS V BISTRE: {cas_str}
+
+        VŠEOBECNÉ FORMÁTOVACIE A SPRÁVANIA PRAVIDLÁ:
+        1. Odpovedaj slušne, prirodzene a stručne.
+        2. PRÍSNY ZÁKAZ používania Markdown hviezdičiek (**text**). Píš čistý text!
+        3. Pre odrážky používaj výhradne pomlčky (-).
+        4. Pri odpovediach sa riaď len informáciami priloženými nižšie. Nevymýšľaj si vlastné jedlá ani fakty.
+        """
+
+        # -----------------------------------------------------------------
+        # TAJNÁ KLASIFIKÁCIA HESLA
+        # -----------------------------------------------------------------
         heslo = zisti_tajne_heslo(req.messages)
 
-        # KROK B: Rozdelenie mantinelov podľa zisteného hesla
-
-        # 1. VETVA: MENU
+        # -----------------------------------------------------------------
+        # PYTHON LOGIKA A PRIRADENIE ŠPECIFICKÝCH DÁT
+        # -----------------------------------------------------------------
+        
+        # VETVA 1: MENU
         if heslo == "MENU":
-            system_prompt = f"""
-            Si oficiálny, priateľský asistent pre bistro Vegnella.
-            AKTUÁLNY REÁLNY ČAS: {now.strftime('%A, %d.%m.%Y %H:%M hodín')}
-
-            RÁMEC PÔSOBNOSTI:
-            Odpovedaj VÝHRADNE na otázky týkajúce sa obedového menu na základe týchto presných dát z webu:
+            specific_prompt = f"""
+            TVOJA AKTUÁLNA TÉMA: OBEDOVÉ MENU
+            Odpovedaj VÝHRADNE na otázky týkajúce sa obedového menu podľa týchto dát z webu:
             --------------------------------------------------
             {DAILY_MENU_DATA}
             --------------------------------------------------
-
-            STRIKTNÉ PRAVIDLÁ:
-            1. Odpovedaj milo a vecne. ZÁKAZ Markdown hviezdičiek (**text**). Pre odrážky používaj výhradne pomlčky (-).
-            2. Drž sa striktne textu obedového menu uvedeného vyššie. Nevymýšľaj si žiadne jedlá.
-            3. Ak sa zákazník pýta na niečo mimo obedového menu, slušne vysvetli, že odpovedáš len na otázky k obedovému menu.
+            Ak sa zákazník pýta na iné témy, povedz mu, že sa sústredíš na obedové menu.
             """
 
-        # 2. VETVA: OBJEDNAVKA
+        # VETVA 2: OBJEDNAVKA
         elif heslo == "OBJEDNAVKA":
-            system_prompt = f"""
-            Si oficiálny, priateľský asistent pre bistro Vegnella.
-            AKTUÁLNY REÁLNY ČAS: {now.strftime('%A, %d.%m.%Y %H:%M hodín')}
+            specific_prompt = """
+            TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA
+            Odpovedaj VÝHRADNE ohľadom objednávok a donášky obedového menu.
 
-            RÁMEC PÔSOBNOSTI:
-            Odpovedaj VÝHRADNE na otázky týkajúce sa objednávok, rezervácií a donášky obedového menu.
-
-            ZÁKLADNÉ PRAVIDLÁ PRE OBJEDNÁVKY:
+            PRAVIDLÁ OBJEDNÁVOK:
             - Donášku obedového menu prijímame v pracovné dni ráno od 8:00 do 10:00.
             - Rozvoz menu prebieha v čase 11:00 - 13:00.
             - Osobný odber menu je možný v čase 11:00 - 16:00 (rezervácia na 0951 747 893).
             - Cez víkend donášku neaplikujeme a bistro je zavreté.
-
-            STRIKTNÉ PRAVIDLÁ:
-            1. Odpovedaj milo a vecne. ZÁKAZ Markdown hviezdičiek (**text**). Pre odrážky používaj výhradne pomlčky (-).
-            2. Sústreď sa na vysvetlenie podmienok objednávky.
             """
 
-        # 3. VETVA: INE (Všetko ostatné)
+        # VETVA 3: INE (Okamžitá odpoveď bez finálneho volania AI)
         else:
             return {
                 "odpoved": "Dobrý deň! Som AI asistent pre Vegnellu. Momentálne vám viem poskytnúť informácie výhradne o našom obedovom menu a objednávkach. Ako vám môžem pomôcť?"
             }
 
-        # KROK C: Finálne zavolanie AI pre vybranú vetvu (MENU alebo OBJEDNAVKA)
-        full_conversation = [{"role": "system", "content": system_prompt}] + req.messages
+        # -----------------------------------------------------------------
+        # FINÁLNE SPOJENIE BASE_PROMPT + SPECIFIC_PROMPT
+        # -----------------------------------------------------------------
+        full_system_prompt = base_prompt + "\n" + specific_prompt
+        
+        full_conversation = [{"role": "system", "content": full_system_prompt}] + req.messages
 
         response = client.chat.completions.create(
             model="gpt-4o-mini",
