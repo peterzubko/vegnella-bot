@@ -89,10 +89,10 @@ def zisti_tajne_heslo(messages_history: list) -> str:
     Zatrieď CELKOVÝ ZÁMER ZÁKAZNÍKA na základe konverzácie do JEDNÉHO z nasledujúcich hestiel:
 
     - MENU             (ak sa rieši obedové menu, ponuka jedál na obed, polievky, čo je navarené)
-    - OBJEDNAVKA MENU  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia alebo otázky či si môže objednať dnes/zajtra)
+    - OBJEDNAVKA_MENU  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia alebo otázky či si môže objednať dnes/zajtra)
     - INFO             (ak sa rieši informácia o vegnella bistre alebo bio obchode, naša ponuka, otváracie hodiny, kontakt, adresa...)
     - INE              (ak ide o správu mimo bistra a bio obchodu vegnella, alebo sa nedá jednoznačne určiť)
-    - RAW TORTY        (ak sa rieši čokoľvek ohľadom raw toriet)
+    - RAW_TORTY         (ak sa rieši čokoľvek ohľadom raw toriet)
     - PONUKA           (ak sa rieši čokoľvek ohľadom našej stálej ponuky jedál)
 
 
@@ -175,10 +175,10 @@ async def chat(req: ChatRequest):
             Ak sa zákazník pýta na minulosť (včera, minulý týždeň...), odpovedz, že informácie o minulom menu nemáš.
             """
 
-        # OBJEDNAVKA
+        # OBJEDNAVKA MENU
         elif heslo == "OBJEDNAVKA MENU":
             specific_prompt = """
-            TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA
+            TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA obedového menu
             Odpovedaj VÝHRADNE ohľadom objednávok a donášky obedového menu.
             
             PRAVIDLÁ OBJEDNÁVOK:
@@ -187,6 +187,60 @@ async def chat(req: ChatRequest):
             - Osobný odber menu je možný v čase 11:00 - 16:00 (rezervácia na 0951 747 893).
             - Cez víkend menu nepodávame.
             """
+
+        # RAW_TORTY
+        elif heslo == "OBJEDNAVKA MENU":
+            specific_prompt = """
+            TVOJA AKTUÁLNA TÉMA: raw torty, ich zloženie, alergény, cenová ponuka
+            Odpovedaj VÝHRADNE ohľadom dát o raw tortách
+            PRAVIDLÁ OBJEDNÁVOK:
+            Objednávky na raw torty prijímame najneskôr 24h vopred (0918 914 922).
+            Torty a zákusky dodávame na podnose zabalené v krabici.
+            Osobné prevzatie na našej prevádzke počas pracovných hodín.
+            Raw torty skladujte v chladničke (4-8°C), v uzatvorenej nádobe kde vydržia cca 4 dni alebo v mrazničke 3 mesiace.          
+            Snickers 1000g    |    38,00€
+            Vlastnosti: vegan | bez lepku
+            Zloženie:
+            mandle, datle, kešu, bio kokosový cukor, kokos, raw kakao, bio kokosový olej, raw mesquite, raw karob, jemne pražené arašidy, himalájska soľ 
+            Raffaello36,00 €   |   1000 gVlastnosti:
+            raw | vegan | bez lepku
+            Zloženie:
+            mandle, kokosový krém, vanilka extrakt, datle, kešu, kokosový olej, agáve, kokos 
+            Jahoda38,00 €   |   1000 gVlastnosti:
+            raw | vegan | bez lepku
+            Zloženie:
+            bio kokosový olej, kešu, mandle, datle, raw kakao, raw čoko kúsky, agáve sirup, lyofilizované jahody, kokos 
+            Slaný Karamel36,00 €   |   1000 gVlastnosti:
+            raw | vegan | bez lepku
+            Zloženie:
+            mandle, bio kokosový olej, kešu, datle, datľový sirup, kokosový cukor, himalájska soľ, raw mesquite, kokos, raw karob, prírodný vanilkový extrakt, raw čoko kúsky 
+            Čokoláda36,00 €   |   1000 gVlastnosti:
+            raw | vegan | bez lepku
+            Zloženie:
+            kokos, kešu, bio koksový olej, mandle, ďatle, raw kakao, prírodná vanilka, raw čokoládové kúsky 
+            Lemon & Matcha36,00 €   |   1000 g
+            Vlastnosti:
+            raw | vegan | bez lepku
+            Zloženie:
+            mandle, kešu, ďatle, bio kokosový olej, citrón, agáve sirup, chia semienka, matcha prášok
+            """
+
+        # INFO
+        elif:
+            specific_prompt = f"""
+            Povedz zákazníkovy výhradne témy ohľadom bistra a bio obchodu napr. otváracie hodiny, kontakt, adresu a dalšie z dostupných dát.
+            Lokalita
+            Nachádzame sa v meste Vranov nad Topľou.
+            Presnejšie nás nájdete za ČSOB, asi 20 metrov od hlavného chodníka.
+            Otváracie hodiny
+            Pondelok - Piatok: 8:00h - 16:00h
+            Sobota: 10:00h - 12:00h
+            Nedeľa: zatvorené
+            Kontakt
+            Adresa: Štúrova 99, 093 01 Vranov nad Topľou
+            Mobil: 0951 747 893
+            E-mail: vegnella@vegnella.sk
+            """ 
 
         # INE
         else:
