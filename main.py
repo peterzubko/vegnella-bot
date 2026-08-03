@@ -177,16 +177,16 @@ async def chat(req: ChatRequest):
             """
 
         # OBJEDNAVKA
-        elif heslo == "OBJEDNAVKA":
+        elif heslo == "OBJEDNAVKA MENU":
             specific_prompt = """
             TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA
             Odpovedaj VÝHRADNE ohľadom objednávok a donášky obedového menu.
-
+            
             PRAVIDLÁ OBJEDNÁVOK:
             - Donášku obedového menu prijímame v pracovné dni ráno od 8:00 do 10:00.
             - Rozvoz menu prebieha v čase 11:00 - 13:00.
             - Osobný odber menu je možný v čase 11:00 - 16:00 (rezervácia na 0951 747 893).
-            - Cez víkend donášku neaplikujeme a bistro je zavreté.
+            - Cez víkend menu nepodávame.
             """
 
         # INE
