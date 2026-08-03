@@ -86,15 +86,14 @@ def zisti_tajne_heslo(messages_history: list) -> str:
         konverzacia_text += f"{rola}: {msg.get('content', '')}\n"
 
     prompt = f"""
-    Zatrieď CELKOVÝ ZÁMER ZÁKAZNÍKA na základe konverzácie do JEDNÉHO z nasledujúcich hestiel:
+    Zatrieď CELKOVÝ ZÁMER ZÁKAZNÍKA na základe konverzácie do JEDNÉHO z nasledujúcich hesiel:
 
     - MENU             (ak sa rieši obedové menu, ponuka jedál na obed, polievky, čo je navarené)
-    - OBJEDNAVKA_MENU  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia alebo otázky či si môže objednať dnes/zajtra)
-    - INFO             (ak sa rieši informácia o vegnella bistre alebo bio obchode, naša ponuka, otváracie hodiny, kontakt, adresa...)
-    - INE              (ak ide o správu mimo bistra a bio obchodu vegnella, alebo sa nedá jednoznačne určiť)
-    - RAW_TORTY         (ak sa rieši čokoľvek ohľadom raw toriet)
-    - PONUKA           (ak sa rieši čokoľvek ohľadom našej stálej ponuky jedál)
-
+    - OBJEDNAVKA_MENU  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia obedového menu)
+    - RAW_TORTY        (ak sa rieši čokoľvek ohľadom raw toriet, zákuskov, ich zloženia, cien, objednávok toriet)
+    - PONUKA           (ak sa rieši stála ponuka jedál, nápoje, stály jedálny lístok bistra mimo obedov)
+    - INFO             (ak sa riešia otváracie hodiny, adresa, lokalita, kontakt, e-mail, telefón, o bistre)
+    - INE              (ak ide o správu mimo bistra a bio obchodu Vegnella, pozdrav bez otázky alebo sa nedá jednoznačne určiť)
 
     Vráť IBA JEDNO SLOVO (heslo) v plnom znení a NIČ INÉ!
 
@@ -146,39 +145,40 @@ async def chat(req: ChatRequest):
         3. Pre odrážky používaj výhradne pomlčky (-).
         4. Pri odpovediach sa riaď len informáciami priloženými nižšie. Nevymýšľaj si vlastné jedlá ani fakty.
 
-        NAŠA PONUKA:
-        Obedové menu - Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetriánske/vegánske jedlá. 
-        Bez aditív, dochucovadiel a iných chemikálii. U nás len čistá príroda. 
-        Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu po dlhý čas.
-        Ponuka jedál - Prídte si k nám na kávičku alebo latté so zdravým dezertom alebo si vyberte z našej ponuky jedál.
-        Raw Torty na objednávku - Na rozdiel od tradičných zákuskov, naše raw torty nevyžadujú pečenie a neobsahujú lepok, vajcia, 
-        mliečne výrobky a rafinované cukry. Namiesto toho obsahujú iba celé, prírodné, rastlinné a nespracované zložky, 
-        ako sú orechy, semená, ovocie, superpotraviny, nerafinované sladidlá a panenské oleje.
-        Predajňa prírodných produktov - Nájdete u nás aj široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, 
-        drogériu a kozmetku a veľa ďalších produktov pre zdravý život. Naši experti vám s výberom radi poradia.
+        NAŠA PONUKA A CHARAKTERISTIKA:
+        - Obedové menu: Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetariánske/vegánske jedlá. Bez aditív, dochucovadiel a iných chemikálií. U nás len čistá príroda. Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu.
+        - Ponuka jedál: Príďte si k nám na kávičku alebo latté so zdravým dezertom alebo si vyberte z našej stálej ponuky jedál.
+        - Raw Torty na objednávku: Nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Obsahujú celistvé, prírodné, rastlinné a nespracované zložky (orechy, semená, ovocie, superpotraviny, nerafinované sladidlá, panenské oleje).
+        - Predajňa prírodných produktov: Široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, drogéria, kozmetika a ďalšie produkty pre zdravý život.
         """
+
         # -----------------------------------------------------------------
         # TAJNÁ KLASIFIKÁCIA HESLA
         # -----------------------------------------------------------------
         heslo = zisti_tajne_heslo(req.messages)
+
         # -----------------------------------------------------------------
         # PYTHON LOGIKA A PRIRADENIE ŠPECIFICKÝCH DÁT
         # -----------------------------------------------------------------
-        # MENU
+
+        # 1. MENU
         if heslo == "MENU":
             specific_prompt = f"""
             TVOJA AKTUÁLNA TÉMA: OBEDOVÉ MENU
             Odpovedaj na otázky týkajúce sa obedového menu podľa týchto dát z webu:
+            --------------------------------------------------
             {DAILY_MENU_DATA}
-            Menu sa podáva iba v pracovné dni od 11:00 do 16:00. Cez víkend obedové menu nepodávame.
-            Ak sa zákazník pýta na menu na budúci týždeň, vysvetli, že ešte nie je zverejnené a bude zverejnené v pondelok ráno o 7:00.
-            Ak sa zákazník pýta na minulosť (včera, minulý týždeň...), odpovedz, že informácie o minulom menu nemáš.
+            --------------------------------------------------
+            PRAVIDLÁ:
+            - Menu sa podáva iba v pracovné dni od 11:00 do 16:00. Cez víkend obedové menu nepodávame.
+            - Ak sa zákazník pýta na menu na budúci týždeň, vysvetli, že ešte nie je zverejnené a bude zverejnené v pondelok ráno o 7:00.
+            - Ak sa zákazník pýta na minulosť (včera, minulý týždeň...), odpovedz, že informácie o minulom menu nemáš k dispozícii.
             """
 
-        # OBJEDNAVKA MENU
+        # 2. OBJEDNAVKA MENU
         elif heslo == "OBJEDNAVKA_MENU":
-            specific_prompt = f"""
-            TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA obedového menu
+            specific_prompt = """
+            TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA OBEDOVÉHO MENU
             Odpovedaj VÝHRADNE ohľadom objednávok a donášky obedového menu.
             
             PRAVIDLÁ OBJEDNÁVOK:
@@ -188,88 +188,75 @@ async def chat(req: ChatRequest):
             - Cez víkend menu nepodávame.
             """
 
-        # RAW_TORTY
+        # 3. RAW_TORTY
         elif heslo == "RAW_TORTY":
-            specific_prompt = f"""
-            TVOJA AKTUÁLNA TÉMA: raw torty, ich zloženie, alergény, cenová ponuka
-            Odpovedaj VÝHRADNE ohľadom dát o raw tortách
+            specific_prompt = """
+            TVOJA AKTUÁLNA TÉMA: RAW TORTY (zloženie, alergény, ceny, objednávky)
+            Odpovedaj VÝHRADNE na základe týchto dát o raw tortách:
+
             PRAVIDLÁ OBJEDNÁVOK:
-            Objednávky na raw torty prijímame najneskôr 24h vopred (0918 914 922).
-            Torty a zákusky dodávame na podnose zabalené v krabici.
-            Osobné prevzatie na našej prevádzke počas pracovných hodín.
-            Raw torty skladujte v chladničke (4-8°C), v uzatvorenej nádobe kde vydržia cca 4 dni alebo v mrazničke 3 mesiace.          
-            Snickers 1000g    |    38,00€
-            Vlastnosti: vegan | bez lepku
-            Zloženie:
-            mandle, datle, kešu, bio kokosový cukor, kokos, raw kakao, bio kokosový olej, raw mesquite, raw karob, jemne pražené arašidy, himalájska soľ 
-            Raffaello36,00 €   |   1000 gVlastnosti:
-            raw | vegan | bez lepku
-            Zloženie:
-            mandle, kokosový krém, vanilka extrakt, datle, kešu, kokosový olej, agáve, kokos 
-            Jahoda38,00 €   |   1000 gVlastnosti:
-            raw | vegan | bez lepku
-            Zloženie:
-            bio kokosový olej, kešu, mandle, datle, raw kakao, raw čoko kúsky, agáve sirup, lyofilizované jahody, kokos 
-            Slaný Karamel36,00 €   |   1000 gVlastnosti:
-            raw | vegan | bez lepku
-            Zloženie:
-            mandle, bio kokosový olej, kešu, datle, datľový sirup, kokosový cukor, himalájska soľ, raw mesquite, kokos, raw karob, prírodný vanilkový extrakt, raw čoko kúsky 
-            Čokoláda36,00 €   |   1000 gVlastnosti:
-            raw | vegan | bez lepku
-            Zloženie:
-            kokos, kešu, bio koksový olej, mandle, ďatle, raw kakao, prírodná vanilka, raw čokoládové kúsky 
-            Lemon & Matcha36,00 €   |   1000 g
-            Vlastnosti:
-            raw | vegan | bez lepku
-            Zloženie:
-            mandle, kešu, ďatle, bio kokosový olej, citrón, agáve sirup, chia semienka, matcha prášok
+            - Objednávky na raw torty prijímame najneskôr 24h vopred na tel. čísle: 0918 914 922.
+            - Torty a zákusky dodávame na podnose zabalené v krabici.
+            - Osobné prevzatie je na prevádzke počas otváracích hodín.
+            - Skladovanie: v chladničke (4-8°C) v uzatvorenej nádobe cca 4 dni, alebo v mrazničke 3 mesiace.
+
+            PONUKA TORIET (1000g / celá torta):
+            - Snickers | 38,00 € | 1000 g | Vlastnosti: vegan, bez lepku | Zloženie: mandle, datle, kešu, bio kokosový cukor, kokos, raw kakao, bio kokosový olej, raw mesquite, raw karob, jemne pražené arašidy, himalájska soľ
+            - Raffaello | 36,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: mandle, kokosový krém, vanilkový extrakt, datle, kešu, kokosový olej, agáve, kokos
+            - Jahoda | 38,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: bio kokosový olej, kešu, mandle, datle, raw kakao, raw čoko kúsky, agáve sirup, lyofilizované jahody, kokos
+            - Slaný Karamel | 36,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: mandle, bio kokosový olej, kešu, datle, datľový sirup, kokosový cukor, himalájska soľ, raw mesquite, kokos, raw karob, prírodný vanilkový extrakt, raw čoko kúsky
+            - Čokoláda | 36,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: kokos, kešu, bio kokosový olej, mandle, datle, raw kakao, prírodná vanilka, raw čokoládové kúsky
+            - Lemon & Matcha | 36,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: mandle, kešu, datle, bio kokosový olej, citrón, agáve sirup, chia semienka, matcha prášok
             """
 
-        # INFO
+        # 4. INFO
         elif heslo == "INFO":
-            specific_prompt = f"""
-            Povedz zákazníkovy výhradne témy ohľadom bistra a bio obchodu napr. otváracie hodiny, kontakt, adresu a dalšie z dostupných dát.
-            Lokalita
-            Nachádzame sa v meste Vranov nad Topľou.
-            Presnejšie nás nájdete za ČSOB, asi 20 metrov od hlavného chodníka.
-            Otváracie hodiny
-            Pondelok - Piatok: 8:00h - 16:00h
-            Sobota: 10:00h - 12:00h
-            Nedeľa: zatvorené
-            Kontakt
+            specific_prompt = """
+            TVOJA AKTUÁLNA TÉMA: INFORMÁCIE O BISTRE A BIO OBCHODE
+            Odpovedaj VÝHRADNE ohľadom prevádzky na základe týchto dát:
+
+            Lokalita: Vranov nad Topľou, za ČSOB (cca 20 metrov od hlavného chodníka).
             Adresa: Štúrova 99, 093 01 Vranov nad Topľou
-            Mobil: 0951 747 893
-            E-mail: vegnella@vegnella.sk
-            """ 
+            
+            Otváracie hodiny:
+            - Pondelok - Piatok: 8:00 - 16:00
+            - Sobota: 10:00 - 12:00
+            - Nedeľa: zatvorené
 
-        # PONUKA
+            Kontakt:
+            - Mobil: 0951 747 893
+            - E-mail: vegnella@vegnella.sk
+            """
+
+        # 5. PONUKA
         elif heslo == "PONUKA":
-            specific_prompt = f"""
-            Rozvoz na jedlo z ponuky zatiaľ nerobíme, možnost objednať pre osobný odber
-            Objednávky prijímame na našom tel. čísle 0951 747 893.
-            Ku každému jedlu je možné pridať polievku z obedového menu za akciovú cenu 1,20€ (platí do vypredania)
-            Počas obedov môže byť príprava niektorých jedál dlhšia ako obyčajne
-            EKO obal na jedlo je za príplatok 0,50€
-            Vegan Mac and Cheese
-            8,60€450g, cestoviny s domácim veg-cheese krémom, doplnené opečenými tekvicovými semienkami (1,8) 
-            Vyprážaný syr, hranolky, zelenina, dresing
-            8,60€400g, klasický vyprážaný syr, zemiakové hranolky (možnosť zameniť za batátové + 1,50eur), dresing na výber kečup/brusnicový/cesnakový/tatárka (1,3) 
-            Vegan burger
-            8,50€350g, domáca cícerová placka, veg syr, veg mayo, BBQ (1) 
-            Teriyaki tofu miska
-            9,50€450g, tofu nugetky v teriyaki omáčke, zelenina, jazmínová rzža 
-            Vegan Wrap
-            7,90€400g, vegan proteínové kúsky, ryža, zelenina, mayo, bbq 
-            Dezerty
-            od 2,90€
-            """ 
+            specific_prompt = """
+            TVOJA AKTUÁLNA TÉMA: STÁLA PONUKA JEDÁL (MIMO OBEDOVÉHO MENU)
+            Odpovedaj VÝHRADNE na základe týchto dát:
 
-        # INE
+            PODMIENKY:
+            - Rozvoz na jedlá zo stálej ponuky zatiaľ nerobíme, možný je len osobný odber.
+            - Objednávky prijímame na tel. čísle: 0951 747 893.
+            - Ku každému jedlu je možné pridať polievku z obedového menu za akciovú cenu 1,20 € (platí do vypredania).
+            - Počas obedov môže byť príprava niektorých jedál dlhšia ako zvyčajne.
+            - EKO obal na jedlo je za príplatok 0,50 €.
+
+            JEDÁLNY LÍSTOK:
+            - Vegan Mac and Cheese | 8,60 € | 450 g | cestoviny s domácim veg-cheese krémom, doplnené opečenými tekvicovými semienkami (alergény 1, 8)
+            - Vyprážaný syr, hranolky, zelenina, dresing | 8,60 € | 400 g | klasický vyprážaný syr, zemiakové hranolky (možnosť zameniť za batátové +1,50 €), dresing na výber: kečup / brusnicový / cesnakový / tatárka (alergény 1, 3)
+            - Vegan burger | 8,50 € | 350 g | domáca cícerová placka, veg syr, veg mayo, BBQ (alergén 1)
+            - Teriyaki tofu miska | 9,50 € | 450 g | tofu nugetky v teriyaki omáčke, zelenina, jazmínová ryža
+            - Vegan Wrap | 7,90 € | 400 g | vegan proteínové kúsky, ryža, zelenina, mayo, bbq
+            - Dezerty | od 2,90 €
+            """
+
+        # 6. INE
         else:
-            specific_prompt = f"""
-            Zákazník sa pýta na niečo s čím mu nevieš pomôcť.
-            Milo vysvetli zákazníkovi, že s tým mu nevieš pomôcť, čí nechce niečo iné.
-            """ 
+            specific_prompt = """
+            TVOJA AKTUÁLNA TÉMA: OTÁZKA MIMO PÔSOBNOSTI BISTRA
+            Zákazník sa pýta na niečo, s čím mu nevieš pomôcť alebo to nesúvisí s bistrom Vegnella.
+            Milo a slušne zákazníkovi vysvetli, že na túto otázku nevieš odpovedať, a ponúkni mu pomoc s obedovým menu, stálou ponukou jedál, raw tortami alebo informáciami o bistre.
+            """
 
         # -----------------------------------------------------------------
         # FINÁLNE SPOJENIE BASE_PROMPT + SPECIFIC_PROMPT
