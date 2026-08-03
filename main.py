@@ -88,10 +88,10 @@ def zisti_tajne_heslo(messages_history: list) -> str:
     prompt = f"""
     Zatrieď CELKOVÝ ZÁMER ZÁKAZNÍKA na základe konverzácie do JEDNÉHO z nasledujúcich hesiel:
 
-    - MENU             (ak sa rieši obedové menu, ponuka jedál na obed, polievky, čo je navarené)
+    - MENU             (ak sa rieši obedové menu, aké je menu na dnes a budúce dni do konca týždňa, jedlo, polievky, čo je navarené)
     - OBJEDNAVKA_MENU  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia obedového menu)
     - RAW_TORTY        (ak sa rieši čokoľvek ohľadom raw toriet, zákuskov, ich zloženia, cien, objednávok toriet)
-    - PONUKA           (ak sa rieši stála ponuka jedál, nápoje, stály jedálny lístok bistra mimo obedov)
+    - PONUKA           (ak sa rieši ponuka jedál, nápoje, stály jedálny lístok bistra mimo obedového menu, bežná ponuka jedál)
     - INFO             (ak sa riešia otváracie hodiny, adresa, lokalita, kontakt, e-mail, telefón, o bistre)
     - INE              (ak ide o správu mimo bistra a bio obchodu Vegnella, pozdrav bez otázky alebo sa nedá jednoznačne určiť)
 
@@ -151,12 +151,10 @@ async def chat(req: ChatRequest):
         - Raw Torty na objednávku: Nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Obsahujú celistvé, prírodné, rastlinné a nespracované zložky (orechy, semená, ovocie, superpotraviny, nerafinované sladidlá, panenské oleje).
         - Predajňa prírodných produktov: Široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, drogéria, kozmetika a ďalšie produkty pre zdravý život.
         """
-
         # -----------------------------------------------------------------
         # TAJNÁ KLASIFIKÁCIA HESLA
         # -----------------------------------------------------------------
         heslo = zisti_tajne_heslo(req.messages)
-
         # -----------------------------------------------------------------
         # PYTHON LOGIKA A PRIRADENIE ŠPECIFICKÝCH DÁT
         # -----------------------------------------------------------------
