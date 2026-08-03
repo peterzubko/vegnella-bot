@@ -164,16 +164,15 @@ async def chat(req: ChatRequest):
         # -----------------------------------------------------------------
         # PYTHON LOGIKA A PRIRADENIE ŠPECIFICKÝCH DÁT
         # -----------------------------------------------------------------
-        # VETVA 1: MENU
+        # MENU
         if heslo == "MENU":
             specific_prompt = f"""
             TVOJA AKTUÁLNA TÉMA: OBEDOVÉ MENU
             Odpovedaj na otázky týkajúce sa obedového menu podľa týchto dát z webu:
             {DAILY_MENU_DATA}
             Menu sa podáva iba v pracovné dni od 11:00 do 16:00. Cez víkend obedové menu nepodávame.
-            Ak sa zákazník pýta na menu na nejaký iný deň ako dnes, zisti aký je to deň a dátum, pozri si dátum v dátach porovnaj s dátumom ktorý chce zákazník a zisti aké menu máme v ten deň, ak vo svojich dátach nemáš menu na ten deň povedz mu že nevieš. 
-            Ak je to víkend, povedz mu, že cez víkend obedové menu nepodávame.
-            Ak je to v budúcnosti ale až v ďalšom týždni, povedz mu, že menu na budúci týždeň ešte nie je zverejnené a povedz že bude zverejnené pondelok ráno.
+            Menu na budúci týždeň ešte nie je zverejnené a povedz že bude zverejnené pondelok ráno ak je to nutné.
+            Nehovor aké menu bolo v minulosti.
             """
 
         # OBJEDNAVKA
