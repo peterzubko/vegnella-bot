@@ -88,10 +88,13 @@ def zisti_tajne_heslo(messages_history: list) -> str:
     prompt = f"""
     Zatrieď CELKOVÝ ZÁMER ZÁKAZNÍKA na základe konverzácie do JEDNÉHO z nasledujúcich hestiel:
 
-    - MENU        (ak sa rieši obedové menu, ponuka jedál na obed, polievky, čo je navarené)
-    - OBJEDNAVKA  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia alebo otázky či si môže objednať dnes/zajtra)
-    - INFO        (ak sa rieši informácia o vegnella bistre alebo bio obchode, otváracie hodiny, kontakt, adresa...)
-    - INE         (ak ide o správu mimo bistra a bio obchodu vegnella, alebo sa nedá jednoznačne určiť)
+    - MENU             (ak sa rieši obedové menu, ponuka jedál na obed, polievky, čo je navarené)
+    - OBJEDNAVKA MENU  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia alebo otázky či si môže objednať dnes/zajtra)
+    - INFO             (ak sa rieši informácia o vegnella bistre alebo bio obchode, naša ponuka, otváracie hodiny, kontakt, adresa...)
+    - INE              (ak ide o správu mimo bistra a bio obchodu vegnella, alebo sa nedá jednoznačne určiť)
+    - RAW TORTY        (ak sa rieši čokoľvek ohľadom raw toriet)
+    - PONUKA           (ak sa rieši čokoľvek ohľadom našej stálej ponuky jedál)
+
 
     Vráť IBA JEDNO SLOVO (heslo) v plnom znení a NIČ INÉ!
 
@@ -143,7 +146,7 @@ async def chat(req: ChatRequest):
         3. Pre odrážky používaj výhradne pomlčky (-).
         4. Pri odpovediach sa riaď len informáciami priloženými nižšie. Nevymýšľaj si vlastné jedlá ani fakty.
 
-        POSKYTUJEME:
+        NAŠA PONUKA:
         Obedové menu - Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetriánske/vegánske jedlá. 
         Bez aditív, dochucovadiel a iných chemikálii. U nás len čistá príroda. 
         Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu po dlhý čas.
@@ -171,7 +174,6 @@ async def chat(req: ChatRequest):
             Ak sa zákazník pýta a menu na nejaký iný deň ako dnes, pozri si dátum v dátach porovnaj s dátumom ktorý chce zákazník a odpovedz mu, aké je menu na ten deň ak to nieje víkend. 
             Ak je to víkend, povedz mu, že cez víkend obedové menu nepodávame.
             Ak je to v budúcnosti ale až v ďalšom týždni, povedz mu, že menu na budúci týždeň ešte nie je zverejnené a povedz že bude zverejnené pondelok ráno.
-            Ak sa zákazník pýta na iné témy, povedz mu, že sa sústredíš na obedové menu.
             """
 
         # OBJEDNAVKA
