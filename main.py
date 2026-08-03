@@ -198,6 +198,7 @@ async def chat(req: ChatRequest):
             - Objednávky na raw torty prijímame najneskôr 24h vopred na tel. čísle: 0951 747 893.
             - Torty a zákusky dodávame na podnose zabalené v krabici.
             - Osobné prevzatie je na prevádzke počas otváracích hodín.
+            - Objednávky je možné urobiť na našom tel. čísle počas otváracích hodín.
             - Skladovanie: v chladničke (4-8°C) v uzatvorenej nádobe cca 4 dni, alebo v mrazničke 3 mesiace.
 
             PONUKA TORIET (1000g / celá torta):
