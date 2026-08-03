@@ -236,7 +236,7 @@ async def chat(req: ChatRequest):
 
             PODMIENKY:
             - Rozvoz na jedlá zo stálej ponuky zatiaľ nerobíme, možný je len osobný odber.
-            - Objednávky prijímame na tel. čísle: 0951 747 893.
+            - Objednávky prijímame na tel. čísle: 0951 747 893 pre osobné prevzatie.
             - Ku každému jedlu je možné pridať polievku z obedového menu za akciovú cenu 1,20 € (platí do vypredania).
             - Počas obedov môže byť príprava niektorých jedál dlhšia ako zvyčajne.
             - EKO obal na jedlo je za príplatok 0,50 €.
