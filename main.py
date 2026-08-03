@@ -90,7 +90,8 @@ def zisti_tajne_heslo(messages_history: list) -> str:
 
     - MENU        (ak sa rieši obedové menu, ponuka jedál na obed, polievky, čo je navarené)
     - OBJEDNAVKA  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia alebo otázky či si môže objednať dnes/zajtra)
-    - INE         (ak ide o správu mimo obedového menu alebo bez nadväznosti)
+    - INFO        (ak sa rieši informácia o vegnella, otváracie hodiny, kontakt, adresa)
+    - INE         (ak ide o správu mimo bistra a bio obchodu vegnella, alebo sa nedá jednoznačne určiť)
 
     Vráť IBA JEDNO SLOVO (heslo) v plnom znení a NIČ INÉ!
 
@@ -163,7 +164,7 @@ async def chat(req: ChatRequest):
             Ak sa zákazník pýta na iné témy, povedz mu, že sa sústredíš na obedové menu.
             """
 
-        # VETVA 2: OBJEDNAVKA
+        # OBJEDNAVKA
         elif heslo == "OBJEDNAVKA":
             specific_prompt = """
             TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA
@@ -176,11 +177,12 @@ async def chat(req: ChatRequest):
             - Cez víkend donášku neaplikujeme a bistro je zavreté.
             """
 
-        # VETVA 3: INE (Okamžitá odpoveď bez finálneho volania AI)
+        # INE
         else:
-            return {
-                "odpoved": "Dobrý deň! Som AI asistent pre Vegnellu. Momentálne vám viem poskytnúť informácie výhradne o našom obedovom menu a objednávkach. Ako vám môžem pomôcť?"
-            }
+            specific_prompt = f"""
+            Zákazník sa pýta na niečo s čím mu nevieš pomôcť.
+            Milo vysvetli zákazníkovi, že s tým mu nevieš pomôcť, čí nechce niečo iné.
+            """ 
 
         # -----------------------------------------------------------------
         # FINÁLNE SPOJENIE BASE_PROMPT + SPECIFIC_PROMPT
