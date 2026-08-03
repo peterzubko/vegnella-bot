@@ -195,7 +195,7 @@ async def chat(req: ChatRequest):
             Odpovedaj VÝHRADNE na základe týchto dát o raw tortách:
 
             PRAVIDLÁ OBJEDNÁVOK:
-            - Objednávky na raw torty prijímame najneskôr 24h vopred na tel. čísle: 0918 914 922.
+            - Objednávky na raw torty prijímame najneskôr 24h vopred na tel. čísle: 0951 747 893.
             - Torty a zákusky dodávame na podnose zabalené v krabici.
             - Osobné prevzatie je na prevádzke počas otváracích hodín.
             - Skladovanie: v chladničke (4-8°C) v uzatvorenej nádobe cca 4 dni, alebo v mrazničke 3 mesiace.
