@@ -1,11 +1,7 @@
 import os
 import time
-import json
-import smtplib
 import asyncio
 import requests
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
 from bs4 import BeautifulSoup
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -19,101 +15,7 @@ from contextlib import asynccontextmanager
 # Globálna premenná pre stiahnuté obedové menu z webu
 DAILY_MENU_DATA = ""
 
-# --- E-MAIL NASTAVENIA (SMTP) ---
-# Odporúčame použiť systémové premenné prostredia
-# --- E-MAIL NASTAVENIA (FORPSI SMTP) ---
-SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.forpsi.com")
-SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
-SMTP_EMAIL = os.environ.get("SMTP_EMAIL", "postmaster@vegnella.sk")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "bc62QFm@V5") 
-BISTRO_EMAIL = os.environ.get("BISTRO_EMAIL", "postmaster@vegnella.sk")
-
-# --- 1. FUNKCIA NA ODOSLANIE E-MAILU OBJEDNÁVKY ---
-def odosli_objednavku_email(polozky: str, meno: str, telefon: str, adresa: str, poznamka: str = "Bez poznámky") -> str:
-    """
-    Fyzicky odosiela e-mail s detailmi objednávky do bistra prostredníctvom SMTP.
-    """
-    try:
-        slovakia_tz = ZoneInfo("Europe/Bratislava")
-        cas_objednavky = datetime.now(slovakia_tz).strftime('%d.%m.%Y o %H:%M')
-
-        predmet = f"NOVÁ OBJEDNÁVKA - Donáška Menu ({meno})"
-        
-        telo_spravy = f"""
-        Nová objednávka donášky obedového menu!
-
-        Čas objednávky: {cas_objednavky}
-        --------------------------------------------------
-        ZÁKAZNÍK: {meno}
-        TELEFÓN:  {telefon}
-        ADRESA:   {adresa}
-        --------------------------------------------------
-        OBJEDNANÉ POLOŽKY:
-        {polozky}
-
-        POZNÁMKA:
-        {poznamka}
-        --------------------------------------------------
-        Správa bola automaticky vygenerovaná AI asistentom Vegnella.
-        """
-
-        msg = MIMEMultipart()
-        msg['From'] = SMTP_EMAIL
-        msg['To'] = BISTRO_EMAIL
-        msg['Subject'] = predmet
-        msg.attach(MIMEText(telo_spravy, 'plain', 'utf-8'))
-
-        # Pripojenie na SMTP server a odoslanie
-        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
-            server.starttls()
-            server.login(SMTP_EMAIL, SMTP_PASSWORD)
-            server.send_message(msg)
-
-        print(f"[{datetime.now().strftime('%Y-%m-%d %H:%M:%S')}] E-mail objednávky bol úspešne odoslaný na {BISTRO_EMAIL}.")
-        return "SUCCESS: Objednávka bola úspešne zaznamenaná a e-mail bol odoslaný do bistra."
-
-    except Exception as e:
-        print(f"[CHYBA E-MAILU]: {str(e)}")
-        return f"ERROR: Nepodarilo sa odoslať e-mail. Chyba: {str(e)}"
-
-# --- 2. DEFINÍCIA OPENAI TOOL (FUNCTION CALLING) ---
-tools = [
-    {
-        "type": "function",
-        "function": {
-            "name": "odosli_objednavku_email",
-            "description": "Odošle e-mail s kompletnou objednávkou donášky obedového menu do bistra, keď zákazník poskytne všetky potrebné údaje.",
-            "parameters": {
-                "type": "object",
-                "properties": {
-                    "polozky": {
-                        "type": "string",
-                        "description": "Presný popis a počet objednaných obedových menu / polievok (napr. 2x Dnešné menu č. 1, 1x Polievka)."
-                    },
-                    "meno": {
-                        "type": "string",
-                        "description": "Meno a priezvisko zákazníka."
-                    },
-                    "telefon": {
-                        "type": "string",
-                        "description": "Kontaktné telefónne číslo zákazníka."
-                    },
-                    "adresa": {
-                        "type": "string",
-                        "description": "Presná adresa doručenia (ulica, číslo, mesto/poschodie)."
-                    },
-                    "poznamka": {
-                        "type": "string",
-                        "description": "Doplňujúca poznámka k objednávke alebo dovozu (voliteľné)."
-                    }
-                },
-                "required": ["polozky", "meno", "telefon", "adresa"]
-            }
-        }
-    }
-]
-
-# --- 3. SCRAPING OBEDOVÉHO MENU Z WEBU ---
+# --- 1. SCRAPING OBEDOVÉHO MENU Z WEBU ---
 def sync_scrape_menu_only():
     global DAILY_MENU_DATA
     url = "https://www.vegnella.sk/obedy.html"
@@ -146,7 +48,7 @@ def sync_scrape_menu_only():
 async def async_scrape_menu():
     return await asyncio.to_thread(sync_scrape_menu_only)
 
-# --- 4. ČASOVAČ (LIFESPAN): SPUSTENIE O 7:00 RÁNO ---
+# --- 2. ČASOVAČ (LIFESPAN): SPUSTENIE O 7:00 RÁNO ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     await async_scrape_menu()
@@ -158,7 +60,7 @@ async def lifespan(app: FastAPI):
     yield
     scheduler.shutdown()
 
-# --- 5. FASTAPI A CORS ---
+# --- 3. FASTAPI A CORS (BEZPEČNOSŤ) ---
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -174,7 +76,7 @@ client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 class ChatRequest(BaseModel):
     messages: list
 
-# --- 6. TAJNÉ VOLANIE: ZISTENIE HESLA S KONTEXTOM ---
+# --- 4. TAJNÉ VOLANIE: ZISTENIE HESLA S KONTEXTOM ---
 def zisti_tajne_heslo(messages_history: list) -> str:
     recent_messages = messages_history[-6:]
     
@@ -186,12 +88,12 @@ def zisti_tajne_heslo(messages_history: list) -> str:
     prompt = f"""
     Zatrieď CELKOVÝ ZÁMER ZÁKAZNÍKA na základe konverzácie do JEDNÉHO z nasledujúcich hesiel:
 
-    - MENU             (ak sa rieši obedové menu, aké je menu na dnes a budúce dni, jedlo, polievky, čo je navarené)
-    - OBJEDNAVKA_MENU  (ak chce zákazník vytvoriť objednávku, chystá sa objednať menu, diktuje adresu, meno, telefón alebo rieši čas doručenia donášky)
+    - MENU             (ak sa rieši obedové menu, aké je menu na dnes a budúce dni do konca týždňa, jedlo, polievky, čo je navarené)
+    - OBJEDNAVKA_MENU  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia obedového menu)
     - RAW_TORTY        (ak sa rieši čokoľvek ohľadom raw toriet, zákuskov, ich zloženia, cien, objednávok toriet)
-    - PONUKA           (ak sa rieši ponuka jedál, nápoje, stály jedálny lístok bistra mimo obedového menu)
-    - INFO             (ak sa riešia otváracie hodiny, adresa, lokalita, kontakt, e-mail, telefón)
-    - INE              (ak ide o správu mimo bistra alebo sa nedá jednoznačne určiť)
+    - PONUKA           (ak sa rieši ponuka jedál, nápoje, stály jedálny lístok bistra mimo obedového menu, bežná ponuka jedál)
+    - INFO             (ak sa riešia otváracie hodiny, adresa, lokalita, kontakt, e-mail, telefón, o bistre)
+    - INE              (ak ide o správu mimo bistra a bio obchodu Vegnella, pozdrav bez otázky alebo sa nedá jednoznačne určiť)
 
     Vráť IBA JEDNO SLOVO (heslo) v plnom znení a NIČ INÉ!
 
@@ -209,7 +111,7 @@ def zisti_tajne_heslo(messages_history: list) -> str:
         print(f"[CHYBA KLASIFIKÁCIE]: {str(e)}")
         return "INE"
 
-# --- 7. ENDPOINTY ---
+# --- 5. ENDPOINTY ---
 @app.get("/")
 def home():
     return {"status": "Vegnella Menu Bot (Core) running"}
@@ -225,10 +127,14 @@ async def chat(req: ChatRequest):
         if not DAILY_MENU_DATA:
             await async_scrape_menu()
 
+        # Jednorazové zistenie aktuálneho času na začiatku
         slovakia_tz = ZoneInfo("Europe/Bratislava")
         now = datetime.now(slovakia_tz)
         cas_str = now.strftime('%A, %d.%m.%Y %H:%M hodín')
 
+        # -----------------------------------------------------------------
+        # VŠEOBECNÉ PRAVIDLÁ PRE VŠETKY VETVY (Základný rámec)
+        # -----------------------------------------------------------------
         base_prompt = f"""
         Si oficiálny, priateľský a profesionálny AI asistent pre bistro a bio obchod Vegnella.
         AKTUÁLNY REÁLNY ČAS V BISTRE: {cas_str}
@@ -238,9 +144,20 @@ async def chat(req: ChatRequest):
         2. PRÍSNY ZÁKAZ používania Markdown hviezdičiek (**text**). Píš čistý text!
         3. Pre odrážky používaj výhradne pomlčky (-).
         4. Pri odpovediach sa riaď len informáciami priloženými nižšie. Nevymýšľaj si vlastné jedlá ani fakty.
-        """
 
+        NAŠA PONUKA A CHARAKTERISTIKA:
+        - Obedové menu: Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetariánske/vegánske jedlá. Bez aditív, dochucovadiel a iných chemikálií. U nás len čistá príroda. Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu.
+        - Ponuka jedál: Príďte si k nám na kávičku alebo latté so zdravým dezertom alebo si vyberte z našej stálej ponuky jedál.
+        - Raw Torty na objednávku: Nevyžadujú pečenie a neobsahujú lepok, vajcia, mliečne výrobky a rafinované cukry. Obsahujú celistvé, prírodné, rastlinné a nespracované zložky (orechy, semená, ovocie, superpotraviny, nerafinované sladidlá, panenské oleje).
+        - Predajňa prírodných produktov: Široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, drogéria, kozmetika a ďalšie produkty pre zdravý život.
+        """
+        # -----------------------------------------------------------------
+        # TAJNÁ KLASIFIKÁCIA HESLA
+        # -----------------------------------------------------------------
         heslo = zisti_tajne_heslo(req.messages)
+        # -----------------------------------------------------------------
+        # PYTHON LOGIKA A PRIRADENIE ŠPECIFICKÝCH DÁT
+        # -----------------------------------------------------------------
 
         # 1. MENU
         if heslo == "MENU":
@@ -256,110 +173,104 @@ async def chat(req: ChatRequest):
             - Ak sa zákazník pýta na minulosť (včera, minulý týždeň...), odpovedz, že informácie o minulom menu nemáš k dispozícii.
             """
 
-# 2. OBJEDNAVKA MENU
+        # 2. OBJEDNAVKA MENU
         elif heslo == "OBJEDNAVKA_MENU":
-            specific_prompt = f"""
+            specific_prompt = """
             TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA OBEDOVÉHO MENU
-            DNEŠNÁ PONUKA OBEDOVÉHO MENU:
-            --------------------------------------------------
-            {DAILY_MENU_DATA}
-            --------------------------------------------------
-
-            PRAVIDLÁ OBJEDNÁVOK A ZBERU ÚDAJOV:
-            - Donášku obedového menu prijímame v pracovné dni ráno od 8:00 do 10:00. Rozvoz prebieha 11:00 - 13:00.
-            - Zisti od zákazníka:
-              1. Položky a počet kusov
-              2. Meno a priezvisko
-              3. Telefónne číslo
-              4. Adresu doručenia
-              5. Poznámku (voliteľné)
+            Odpovedaj VÝHRADNE ohľadom objednávok a donášky obedového menu.
             
-            DÔLEŽITÉ PRAVIDLO PRE ODOSLANIE:
-            - Ak máš Meno, Telefón, Adresu a Položky, a opýtal si sa na poznámku: Ak zákazník napíše "pokračuj", "nie", "nemám", "ok" alebo čokoľvek podobné, považuj poznámku za "Bez poznámky" a OKAMŽITE spusti funkciu 'odosli_objednavku_email'!
-            - NIKDY sa nepýtaj na poznámku opakovane. Ak máš základné údaje, IHNEĎ volaj funkciu!
+            PRAVIDLÁ OBJEDNÁVOK:
+            - Donášku obedového menu prijímame v pracovné dni ráno od 8:00 do 10:00.
+            - Rozvoz menu prebieha v čase 11:00 - 13:00.
+            - Osobný odber menu je možný v čase 11:00 - 16:00 (rezervácia na 0951 747 893).
+            - Cez víkend menu nepodávame.
             """
 
         # 3. RAW_TORTY
         elif heslo == "RAW_TORTY":
             specific_prompt = """
             TVOJA AKTUÁLNA TÉMA: RAW TORTY (zloženie, alergény, ceny, objednávky)
+            Odpovedaj VÝHRADNE na základe týchto dát o raw tortách:
+
             PRAVIDLÁ OBJEDNÁVOK:
             - Objednávky na raw torty prijímame najneskôr 24h vopred na tel. čísle: 0951 747 893.
+            - Torty a zákusky dodávame na podnose zabalené v krabici.
+            - Osobné prevzatie je na prevádzke počas otváracích hodín.
+            - Objednávky je možné urobiť na našom tel. čísle počas otváracích hodín.
+            - Skladovanie: v chladničke (4-8°C) v uzatvorenej nádobe cca 4 dni, alebo v mrazničke 3 mesiace.
+
+            PONUKA TORIET (1000g / celá torta):
+            - Snickers | 38,00 € | 1000 g | Vlastnosti: vegan, bez lepku | Zloženie: mandle, datle, kešu, bio kokosový cukor, kokos, raw kakao, bio kokosový olej, raw mesquite, raw karob, jemne pražené arašidy, himalájska soľ
+            - Raffaello | 36,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: mandle, kokosový krém, vanilkový extrakt, datle, kešu, kokosový olej, agáve, kokos
+            - Jahoda | 38,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: bio kokosový olej, kešu, mandle, datle, raw kakao, raw čoko kúsky, agáve sirup, lyofilizované jahody, kokos
+            - Slaný Karamel | 36,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: mandle, bio kokosový olej, kešu, datle, datľový sirup, kokosový cukor, himalájska soľ, raw mesquite, kokos, raw karob, prírodný vanilkový extrakt, raw čoko kúsky
+            - Čokoláda | 36,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: kokos, kešu, bio kokosový olej, mandle, datle, raw kakao, prírodná vanilka, raw čokoládové kúsky
+            - Lemon & Matcha | 36,00 € | 1000 g | Vlastnosti: raw, vegan, bez lepku | Zloženie: mandle, kešu, datle, bio kokosový olej, citrón, agáve sirup, chia semienka, matcha prášok
             """
 
         # 4. INFO
         elif heslo == "INFO":
             specific_prompt = """
             TVOJA AKTUÁLNA TÉMA: INFORMÁCIE O BISTRE A BIO OBCHODE
-            Lokalita: Vranov nad Topľou, za ČSOB. Adresa: Štúrova 99, 093 01 Vranov nad Topľou
-            Otváracie hodiny: Po-Pi 8:00 - 16:00, So 10:00 - 12:00, Ne zatvorené. Mobil: 0951 747 893
+            Odpovedaj VÝHRADNE ohľadom prevádzky na základe týchto dát:
+
+            Lokalita: Vranov nad Topľou, za ČSOB (cca 20 metrov od hlavného chodníka).
+            Adresa: Štúrova 99, 093 01 Vranov nad Topľou
+            
+            Otváracie hodiny:
+            - Pondelok - Piatok: 8:00 - 16:00
+            - Sobota: 10:00 - 12:00
+            - Nedeľa: zatvorené
+
+            Kontakt:
+            - Mobil: 0951 747 893
+            - E-mail: vegnella@vegnella.sk
             """
 
         # 5. PONUKA
         elif heslo == "PONUKA":
             specific_prompt = """
             TVOJA AKTUÁLNA TÉMA: STÁLA PONUKA JEDÁL (MIMO OBEDOVÉHO MENU)
-            Rozvoz na jedlá zo stálej ponuky zatiaľ nerobíme, možný je len osobný odber na 0951 747 893.
+            Odpovedaj VÝHRADNE na základe týchto dát:
+
+            PODMIENKY:
+            - Rozvoz na jedlá zo stálej ponuky zatiaľ nerobíme, možný je len osobný odber.
+            - Objednávky prijímame na tel. čísle: 0951 747 893 pre osobné prevzatie.
+            - Ku každému jedlu je možné pridať polievku z obedového menu za akciovú cenu 1,20 € (platí do vypredania).
+            - Počas obedov môže byť príprava niektorých jedál dlhšia ako zvyčajne.
+            - EKO obal na jedlo je za príplatok 0,50 €.
+
+            JEDÁLNY LÍSTOK:
+            - Vegan Mac and Cheese | 8,60 € | 450 g | cestoviny s domácim veg-cheese krémom, doplnené opečenými tekvicovými semienkami (alergény 1, 8)
+            - Vyprážaný syr, hranolky, zelenina, dresing | 8,60 € | 400 g | klasický vyprážaný syr, zemiakové hranolky (možnosť zameniť za batátové +1,50 €), dresing na výber: kečup / brusnicový / cesnakový / tatárka (alergény 1, 3)
+            - Vegan burger | 8,50 € | 350 g | domáca cícerová placka, veg syr, veg mayo, BBQ (alergén 1)
+            - Teriyaki tofu miska | 9,50 € | 450 g | tofu nugetky v teriyaki omáčke, zelenina, jazmínová ryža
+            - Vegan Wrap | 7,90 € | 400 g | vegan proteínové kúsky, ryža, zelenina, mayo, bbq
+            - Dezerty | od 2,90 €
             """
 
         # 6. INE
         else:
             specific_prompt = """
             TVOJA AKTUÁLNA TÉMA: OTÁZKA MIMO PÔSOBNOSTI BISTRA
-            Milo a slušne vysvetli zákazníkovi, že s tým mu nevieš pomôcť.
+            Zákazník sa pýta na niečo, s čím mu nevieš pomôcť alebo to nesúvisí s bistrom Vegnella.
+            Milo a slušne zákazníkovi vysvetli, že na túto otázku nevieš odpovedať, a ponúkni mu pomoc s obedovým menu, stálou ponukou jedál, raw tortami alebo informáciami o bistre.
             """
 
+        # -----------------------------------------------------------------
+        # FINÁLNE SPOJENIE BASE_PROMPT + SPECIFIC_PROMPT
+        # -----------------------------------------------------------------
         full_system_prompt = base_prompt + "\n" + specific_prompt
+        
         full_conversation = [{"role": "system", "content": full_system_prompt}] + req.messages
 
-        # --- PRVÉ VOLANIE OPENAI (s nastavenými tools) ---
         response = client.chat.completions.create(
             model="gpt-4o-mini",
             messages=full_conversation,
-            tools=tools if heslo == "OBJEDNAVKA_MENU" else None,
-            tool_choice="auto" if heslo == "OBJEDNAVKA_MENU" else None,
             temperature=0.2
         )
 
-        response_message = response.choices[0].message
-
-        # --- AK AI ROZHODLA, ŽE MÁ SPUSŤIŤ FUNKCIU (MÁ VŠETKY ÚDAJE) ---
-# --- AK AI ROZHODLA, ŽE MÁ SPUSTIŤ FUNKCIU ---
-        if response_message.tool_calls:
-            for tool_call in response_message.tool_calls:
-                if tool_call.function.name == "odosli_objednavku_email":
-                    args = json.loads(tool_call.function.arguments)
-                    
-                    print(f"[LOG] Spúšťam odoslanie e-mailu pre: {args.get('meno')}")
-
-                    vysledok_odeslania = odosli_objednavku_email(
-                        polozky=args.get("polozky", ""),
-                        meno=args.get("meno", ""),
-                        telefon=args.get("telefon", ""),
-                        adresa=args.get("adresa", ""),
-                        poznamka=args.get("poznamka", "Bez poznámky")
-                    )
-
-                    # Pridáme odpovede do histórie
-                    full_conversation.append(response_message)
-                    full_conversation.append({
-                        "role": "tool",
-                        "tool_call_id": tool_call.id,
-                        "content": vysledok_odeslania
-                    })
-
-                    # Druhé volanie pre odpoveď zákazníkovi
-                    second_response = client.chat.completions.create(
-                        model="gpt-4o-mini",
-                        messages=full_conversation,
-                        temperature=0.2
-                    )
-                    
-                    reply = second_response.choices[0].message.content or "Ďakujeme! Vaša objednávka bola úspešne zaznamenaná a odoslaná do bistra."
-                    return {"odpoved": reply.replace("**", "")}
-
-        # Ak funkcia nebola vyvolaná (bežná konverzácia alebo zber chýbajúcich údajov)
-        reply = response_message.content or ""
+        reply = response.choices[0].message.content or ""
         clean_reply = reply.replace("**", "")
 
         return {"odpoved": clean_reply}
