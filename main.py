@@ -256,7 +256,7 @@ async def chat(req: ChatRequest):
             - Ak sa zákazník pýta na minulosť (včera, minulý týždeň...), odpovedz, že informácie o minulom menu nemáš k dispozícii.
             """
 
-        # 2. OBJEDNAVKA MENU (S FUNKCIOU OBJEDNÁVANIA)
+# 2. OBJEDNAVKA MENU
         elif heslo == "OBJEDNAVKA_MENU":
             specific_prompt = f"""
             TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA OBEDOVÉHO MENU
@@ -267,15 +267,16 @@ async def chat(req: ChatRequest):
 
             PRAVIDLÁ OBJEDNÁVOK A ZBERU ÚDAJOV:
             - Donášku obedového menu prijímame v pracovné dni ráno od 8:00 do 10:00. Rozvoz prebieha 11:00 - 13:00.
-            - Ak chce zákazník vytvoriť objednávku na donášku, postupne od neho zisti tieto POVINNÉ ÚDAJE:
-              1. Presné položky a počet kusov (ktoré obedové menu/polievku chce)
+            - Zisti od zákazníka:
+              1. Položky a počet kusov
               2. Meno a priezvisko
               3. Telefónne číslo
               4. Adresu doručenia
-              5. Poznamku (voliteľné)
-            - Pýtaj sa prirodzene a krok za krokom, ak niektoré údaje chýbajú.
-            - KÝM NEMÁŠ VŠETKY 4 POVINNÉ ÚDAJE (Položky, Meno, Telefón, Adresa), NEVOLAJ funkciu odosli_objednavku_email!
-            - HNEĎ AKO MÁŠ VŠETKY ÚDAJE, spusti funkciu 'odosli_objednavku_email', ktorá odošle objednávku do bistra!
+              5. Poznámku (voliteľné)
+            
+            DÔLEŽITÉ PRAVIDLO PRE ODOSLANIE:
+            - Ak máš Meno, Telefón, Adresu a Položky, a opýtal si sa na poznámku: Ak zákazník napíše "pokračuj", "nie", "nemám", "ok" alebo čokoľvek podobné, považuj poznámku za "Bez poznámky" a OKAMŽITE spusti funkciu 'odosli_objednavku_email'!
+            - NIKDY sa nepýtaj na poznámku opakovane. Ak máš základné údaje, IHNEĎ volaj funkciu!
             """
 
         # 3. RAW_TORTY
@@ -323,22 +324,23 @@ async def chat(req: ChatRequest):
         response_message = response.choices[0].message
 
         # --- AK AI ROZHODLA, ŽE MÁ SPUSŤIŤ FUNKCIU (MÁ VŠETKY ÚDAJE) ---
+# --- AK AI ROZHODLA, ŽE MÁ SPUSTIŤ FUNKCIU ---
         if response_message.tool_calls:
             for tool_call in response_message.tool_calls:
                 if tool_call.function.name == "odosli_objednavku_email":
-                    # Extrahujeme argumenty dodané modelom
                     args = json.loads(tool_call.function.arguments)
                     
-                    # Spustíme našu Python funkciu
+                    print(f"[LOG] Spúšťam odoslanie e-mailu pre: {args.get('meno')}")
+
                     vysledok_odeslania = odosli_objednavku_email(
-                        polozky=args.get("polozky"),
-                        meno=args.get("meno"),
-                        telefon=args.get("telefon"),
-                        adresa=args.get("adresa"),
+                        polozky=args.get("polozky", ""),
+                        meno=args.get("meno", ""),
+                        telefon=args.get("telefon", ""),
+                        adresa=args.get("adresa", ""),
                         poznamka=args.get("poznamka", "Bez poznámky")
                     )
 
-                    # Pridáme odpoveď z funkcie do histórie konverzácie
+                    # Pridáme odpovede do histórie
                     full_conversation.append(response_message)
                     full_conversation.append({
                         "role": "tool",
@@ -346,14 +348,14 @@ async def chat(req: ChatRequest):
                         "content": vysledok_odeslania
                     })
 
-                    # Druhé volanie OpenAI, aby zrekapitulovala výsledok pre zákazníka
+                    # Druhé volanie pre odpoveď zákazníkovi
                     second_response = client.chat.completions.create(
                         model="gpt-4o-mini",
                         messages=full_conversation,
                         temperature=0.2
                     )
                     
-                    reply = second_response.choices[0].message.content or ""
+                    reply = second_response.choices[0].message.content or "Ďakujeme! Vaša objednávka bola úspešne zaznamenaná a odoslaná do bistra."
                     return {"odpoved": reply.replace("**", "")}
 
         # Ak funkcia nebola vyvolaná (bežná konverzácia alebo zber chýbajúcich údajov)
