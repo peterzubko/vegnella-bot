@@ -25,7 +25,7 @@ DAILY_MENU_DATA = ""
 SMTP_SERVER = os.environ.get("SMTP_SERVER", "smtp.forpsi.com")
 SMTP_PORT = int(os.environ.get("SMTP_PORT", 587))
 SMTP_EMAIL = os.environ.get("SMTP_EMAIL", "postmaster@vegnella.sk")
-SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "TVOJE_HESLO_K_POSTMASTER_MAILU") 
+SMTP_PASSWORD = os.environ.get("SMTP_PASSWORD", "bc62QFm@V5") 
 BISTRO_EMAIL = os.environ.get("BISTRO_EMAIL", "postmaster@vegnella.sk")
 
 # --- 1. FUNKCIA NA ODOSLANIE E-MAILU OBJEDNÁVKY ---
