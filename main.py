@@ -90,7 +90,7 @@ def zisti_tajne_heslo(messages_history: list) -> str:
 
     - MENU        (ak sa rieši obedové menu, ponuka jedál na obed, polievky, čo je navarené)
     - OBJEDNAVKA  (ak sa rieši objednávka, rezervácia, donáška, čas doručenia alebo otázky či si môže objednať dnes/zajtra)
-    - INFO        (ak sa rieši informácia o vegnella, otváracie hodiny, kontakt, adresa)
+    - INFO        (ak sa rieši informácia o vegnella bistre alebo bio obchode, otváracie hodiny, kontakt, adresa...)
     - INE         (ak ide o správu mimo bistra a bio obchodu vegnella, alebo sa nedá jednoznačne určiť)
 
     Vráť IBA JEDNO SLOVO (heslo) v plnom znení a NIČ INÉ!
@@ -134,7 +134,7 @@ async def chat(req: ChatRequest):
         # VŠEOBECNÉ PRAVIDLÁ PRE VŠETKY VETVY (Základný rámec)
         # -----------------------------------------------------------------
         base_prompt = f"""
-        Si oficiálny, priateľský a profesionálny AI asistent pre bistro Vegnella.
+        Si oficiálny, priateľský a profesionálny AI asistent pre bistro a bio obchod Vegnella.
         AKTUÁLNY REÁLNY ČAS V BISTRE: {cas_str}
 
         VŠEOBECNÉ FORMÁTOVACIE A SPRÁVANIA PRAVIDLÁ:
@@ -142,17 +142,25 @@ async def chat(req: ChatRequest):
         2. PRÍSNY ZÁKAZ používania Markdown hviezdičiek (**text**). Píš čistý text!
         3. Pre odrážky používaj výhradne pomlčky (-).
         4. Pri odpovediach sa riaď len informáciami priloženými nižšie. Nevymýšľaj si vlastné jedlá ani fakty.
-        """
 
+        POSKYTUJEME:
+        Obedové menu - Varíme pre vás čerstvé, zdravé a chutné špeciality. Špecializujeme sa na vegetriánske/vegánske jedlá. 
+        Bez aditív, dochucovadiel a iných chemikálii. U nás len čistá príroda. 
+        Naše jedlá vám zabezpečia dostatok všetkých živín dôležitých pre organizmus a udržia vám zdravie, mladosť a vitalitu po dlhý čas.
+        Ponuka jedál - Prídte si k nám na kávičku alebo latté so zdravým dezertom alebo si vyberte z našej ponuky jedál.
+        Raw Torty na objednávku - Na rozdiel od tradičných zákuskov, naše raw torty nevyžadujú pečenie a neobsahujú lepok, vajcia, 
+        mliečne výrobky a rafinované cukry. Namiesto toho obsahujú iba celé, prírodné, rastlinné a nespracované zložky, 
+        ako sú orechy, semená, ovocie, superpotraviny, nerafinované sladidlá a panenské oleje.
+        Predajňa prírodných produktov - Nájdete u nás aj široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, 
+        drogériu a kozmetku a veľa ďalších produktov pre zdravý život. Naši experti vám s výberom radi poradia.
+        """
         # -----------------------------------------------------------------
         # TAJNÁ KLASIFIKÁCIA HESLA
         # -----------------------------------------------------------------
         heslo = zisti_tajne_heslo(req.messages)
-
         # -----------------------------------------------------------------
         # PYTHON LOGIKA A PRIRADENIE ŠPECIFICKÝCH DÁT
         # -----------------------------------------------------------------
-        
         # VETVA 1: MENU
         if heslo == "MENU":
             specific_prompt = f"""
