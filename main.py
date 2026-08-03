@@ -171,8 +171,8 @@ async def chat(req: ChatRequest):
             Odpovedaj na otázky týkajúce sa obedového menu podľa týchto dát z webu:
             {DAILY_MENU_DATA}
             Menu sa podáva iba v pracovné dni od 11:00 do 16:00. Cez víkend obedové menu nepodávame.
-            Menu na budúci týždeň ešte nie je zverejnené a povedz že bude zverejnené pondelok ráno ak je to nutné.
-            Nehovor aké menu bolo v minulosti.
+            Ak sa zákazník pýta na menu na budúci týždeň, vysvetli, že ešte nie je zverejnené a bude zverejnené v pondelok ráno o 7:00.
+            Ak sa zákazník pýta na minulosť (včera, minulý týždeň...), odpovedz, že informácie o minulom menu nemáš.
             """
 
         # OBJEDNAVKA
