@@ -176,8 +176,8 @@ async def chat(req: ChatRequest):
             """
 
         # OBJEDNAVKA MENU
-        elif heslo == "OBJEDNAVKA MENU":
-            specific_prompt = """
+        elif heslo == "OBJEDNAVKA_MENU":
+            specific_prompt = f"""
             TVOJA AKTUÁLNA TÉMA: OBJEDNÁVKY A DONÁŠKA obedového menu
             Odpovedaj VÝHRADNE ohľadom objednávok a donášky obedového menu.
             
@@ -189,8 +189,8 @@ async def chat(req: ChatRequest):
             """
 
         # RAW_TORTY
-        elif heslo == "OBJEDNAVKA MENU":
-            specific_prompt = """
+        elif heslo == "RAW_TORTY":
+            specific_prompt = f"""
             TVOJA AKTUÁLNA TÉMA: raw torty, ich zloženie, alergény, cenová ponuka
             Odpovedaj VÝHRADNE ohľadom dát o raw tortách
             PRAVIDLÁ OBJEDNÁVOK:
@@ -226,7 +226,7 @@ async def chat(req: ChatRequest):
             """
 
         # INFO
-        elif:
+        elif heslo == "INFO":
             specific_prompt = f"""
             Povedz zákazníkovy výhradne témy ohľadom bistra a bio obchodu napr. otváracie hodiny, kontakt, adresu a dalšie z dostupných dát.
             Lokalita
@@ -240,6 +240,28 @@ async def chat(req: ChatRequest):
             Adresa: Štúrova 99, 093 01 Vranov nad Topľou
             Mobil: 0951 747 893
             E-mail: vegnella@vegnella.sk
+            """ 
+
+        # PONUKA
+        elif heslo == "PONUKA":
+            specific_prompt = f"""
+            Rozvoz na jedlo z ponuky zatiaľ nerobíme, možnost objednať pre osobný odber
+            Objednávky prijímame na našom tel. čísle 0951 747 893.
+            Ku každému jedlu je možné pridať polievku z obedového menu za akciovú cenu 1,20€ (platí do vypredania)
+            Počas obedov môže byť príprava niektorých jedál dlhšia ako obyčajne
+            EKO obal na jedlo je za príplatok 0,50€
+            Vegan Mac and Cheese
+            8,60€450g, cestoviny s domácim veg-cheese krémom, doplnené opečenými tekvicovými semienkami (1,8) 
+            Vyprážaný syr, hranolky, zelenina, dresing
+            8,60€400g, klasický vyprážaný syr, zemiakové hranolky (možnosť zameniť za batátové + 1,50eur), dresing na výber kečup/brusnicový/cesnakový/tatárka (1,3) 
+            Vegan burger
+            8,50€350g, domáca cícerová placka, veg syr, veg mayo, BBQ (1) 
+            Teriyaki tofu miska
+            9,50€450g, tofu nugetky v teriyaki omáčke, zelenina, jazmínová rzža 
+            Vegan Wrap
+            7,90€400g, vegan proteínové kúsky, ryža, zelenina, mayo, bbq 
+            Dezerty
+            od 2,90€
             """ 
 
         # INE
