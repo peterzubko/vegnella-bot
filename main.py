@@ -157,10 +157,12 @@ async def chat(req: ChatRequest):
         if heslo == "MENU":
             specific_prompt = f"""
             TVOJA AKTUÁLNA TÉMA: OBEDOVÉ MENU
-            Odpovedaj VÝHRADNE na otázky týkajúce sa obedového menu podľa týchto dát z webu:
-            --------------------------------------------------
+            Odpovedaj na otázky týkajúce sa obedového menu podľa týchto dát z webu:
             {DAILY_MENU_DATA}
-            --------------------------------------------------
+            Menu sa podáva iba v pracovné dni od 11:00 do 16:00. Cez víkend obedové menu nepodávame.
+            Ak sa zákazník pýta a menu na nejaký iný deň ako dnes, pozri si dátum v dátach porovnaj s dátumom ktorý chce zákazník a odpovedz mu, aké je menu na ten deň ak to nieje víkend. 
+            Ak je to víkend, povedz mu, že cez víkend obedové menu nepodávame.
+            Ak je to v budúcnosti ale až v ďalšom týždni, povedz mu, že menu na budúci týždeň ešte nie je zverejnené a povedz že bude zverejnené pondelok ráno.
             Ak sa zákazník pýta na iné témy, povedz mu, že sa sústredíš na obedové menu.
             """
 
