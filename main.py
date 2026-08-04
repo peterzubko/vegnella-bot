@@ -168,7 +168,7 @@ async def chat(req: ChatRequest):
             {DAILY_MENU_DATA}
             --------------------------------------------------
             PRAVIDLÁ:
-            - Menu sa podáva iba v pracovné dni od 11:00 do 16:00. Cez víkend obedové menu nepodávame.
+            - Menu sa podáva iba v pracovné dni od 11:00 do vypredania (max. do 16:00h). Cez víkend obedové menu nepodávame.
             - Ak sa zákazník pýta na menu na budúci týždeň, vysvetli, že ešte nie je zverejnené a bude zverejnené v pondelok ráno o 7:00.
             - Ak sa zákazník pýta na minulosť (včera, minulý týždeň...), odpovedz, že informácie o minulom menu nemáš k dispozícii.
             """
@@ -180,7 +180,7 @@ async def chat(req: ChatRequest):
             Odpovedaj VÝHRADNE ohľadom objednávok a donášky obedového menu.
             
             PRAVIDLÁ OBJEDNÁVOK:
-            - Donášku obedového menu prijímame v pracovné dni ráno od 8:00 do 10:00.
+            - Donášku obedového menu prijímame v pracovné dni ráno od 8:00 do 13:00.
             - Rozvoz menu prebieha v čase 11:00 - 13:00.
             - Osobný odber menu je možný v čase 11:00 - 16:00 (je možné aj rezervovať menu u nás v bistre na 0951 747 893).
             - Cez víkend menu nepodávame.
