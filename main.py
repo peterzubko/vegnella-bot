@@ -182,7 +182,7 @@ async def chat(req: ChatRequest):
             PRAVIDLÁ OBJEDNÁVOK:
             - Donášku obedového menu prijímame v pracovné dni ráno od 8:00 do 10:00.
             - Rozvoz menu prebieha v čase 11:00 - 13:00.
-            - Osobný odber menu je možný v čase 11:00 - 16:00 (rezervácia na 0951 747 893).
+            - Osobný odber menu je možný v čase 11:00 - 16:00 (je možné aj rezervovať menu u nás v bistre na 0951 747 893).
             - Cez víkend menu nepodávame.
             """
 
