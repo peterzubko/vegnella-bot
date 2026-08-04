@@ -6,7 +6,7 @@ from bs4 import BeautifulSoup
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from openai import OpenAI
+from openai import AsyncOpenAI  # <-- Zmena na Async pre vysoký výkon
 from datetime import datetime
 from zoneinfo import ZoneInfo
 from apscheduler.schedulers.background import BackgroundScheduler
@@ -51,6 +51,7 @@ async def async_scrape_menu():
 # --- 2. ČASOVAČ (LIFESPAN): SPUSTENIE O 7:00 RÁNO ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    # Nábeh pri štarte aplikácie
     await async_scrape_menu()
     
     scheduler = BackgroundScheduler(timezone="Europe/Bratislava")
@@ -63,21 +64,31 @@ async def lifespan(app: FastAPI):
 # --- 3. FASTAPI A CORS (BEZPEČNOSŤ) ---
 app = FastAPI(lifespan=lifespan)
 
+# Korektné nastavenie CORS pre produkciu aj lokálne testovanie
+origins = [
+    "https://www.vegnella.sk",
+    "https://vegnella.sk",
+    "http://localhost",
+    "http://localhost:3000",
+    "http://127.0.0.1"
+]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://www.vegnella.sk", "https://vegnella.sk"],
+    allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "OPTIONS"],
     allow_headers=["*"],
 )
 
-client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+# Inicializácia ASYNCHRÓNNEHO OpenAI klienta
+client = AsyncOpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
 
 class ChatRequest(BaseModel):
     messages: list
 
-# --- 4. TAJNÉ VOLANIE: ZISTENIE HESLA S KONTEXTOM ---
-def zisti_tajne_heslo(messages_history: list) -> str:
+# --- 4. TAJNÉ VOLANIE: ZISTENIE HESLA S KONTEXTOM (ASYNC) ---
+async def zisti_tajne_heslo(messages_history: list) -> str:
     recent_messages = messages_history[-6:]
     
     konverzacia_text = ""
@@ -101,7 +112,8 @@ def zisti_tajne_heslo(messages_history: list) -> str:
     {konverzacia_text}
     """
     try:
-        response = client.chat.completions.create(
+        # Používame await pre neblokujúce volanie
+        response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.0
@@ -113,7 +125,7 @@ def zisti_tajne_heslo(messages_history: list) -> str:
 
 # --- 5. ENDPOINTY ---
 @app.get("/")
-def home():
+async def home():
     return {"status": "Vegnella Menu Bot (Core) running"}
 
 @app.get("/api/refresh")
@@ -152,9 +164,10 @@ async def chat(req: ChatRequest):
         - Predajňa prírodných produktov: Široký výber zdravých potravín, prírodné a kvalitné doplnky výživy, drogéria, kozmetika a ďalšie produkty pre zdravý život.
         """
         # -----------------------------------------------------------------
-        # TAJNÁ KLASIFIKÁCIA HESLA
+        # TAJNÁ KLASIFIKÁCIA HESLA (AWAIT)
         # -----------------------------------------------------------------
-        heslo = zisti_tajne_heslo(req.messages)
+        heslo = await zisti_tajne_heslo(req.messages)
+        
         # -----------------------------------------------------------------
         # PYTHON LOGIKA A PRIRADENIE ŠPECIFICKÝCH DÁT
         # -----------------------------------------------------------------
@@ -264,7 +277,8 @@ async def chat(req: ChatRequest):
         
         full_conversation = [{"role": "system", "content": full_system_prompt}] + req.messages
 
-        response = client.chat.completions.create(
+        # Volanie OpenAI cez Async API
+        response = await client.chat.completions.create(
             model="gpt-4o-mini",
             messages=full_conversation,
             temperature=0.2
