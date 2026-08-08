@@ -182,10 +182,7 @@ async def chat(req: ChatRequest):
             --------------------------------------------------
             PRAVIDLÁ:
             - Menu sa podáva iba v pracovné dni od 11:00 do vypredania (max. do 16:00h). Cez víkend obedové menu nepodávame.
-            - Ak sa zákazník pýta na buducnosť (zajtra, budúci týždeň, iný deň v budúcnosti), musíš skontrolovať dnešný dátum a deň, 
-            a potom pozri aký dátum bude pre deň na ktorý sa zákazník pýta, potom skontroluj dátum v menu dátach ktoré máš na ktoré dni 
-            presne až na základe toho priradíš menu ku dňu/dňom, ktoré je žiadané od zákazníka ak dátum sedí možeš poskytnúť menu, 
-            ak pre daný dátum menu nemáš povedz, že ešte nie je zverejnené a bude zverejnené v pondelok ráno o 7:00.
+            - Ak sa zákazník pýta na buducnosť (zajtra, budúci týždeň, iný deň v budúcnosti), musíš skontrolovať dnešný dátum a deň, a potom pozri aký dátum bude pre deň na ktorý sa zákazník pýta, potom skontroluj dátum v menu dátach ktoré máš na ktoré dni presne až na základe toho priradíš menu ku dňu/dňom, ktoré je žiadané od zákazníka ak dátum sedí možeš poskytnúť menu, ak pre daný dátum menu nemáš povedz, že ešte nie je zverejnené a bude zverejnené v pondelok ráno o 7:00. Aktuálny čas: {cas_str}.
             - Ak sa zákazník pýta na minulosť (včera, minulý týždeň...), odpovedz, že informácie o minulom menu nemáš k dispozícii.
             """
 
